@@ -7,6 +7,8 @@
 #import <Foundation/Foundation.h>
 #import <WebRTC/WebRTC.h>
 
+#import "MFPixelBufferHelper.h"
+
 @class FlutterRTCVideoRenderer;
 @class FlutterRTCFrameCapturer;
 
@@ -19,6 +21,14 @@ typedef void (^CapturerStopHandler)(CompletionHandler handler);
 , RTCDesktopMediaListDelegate, RTCDesktopCapturerDelegate
 #endif
 >
+///是否美颜
+@property (nonatomic, assign) BOOL isBeauty;
+
+///视频源
+@property (nonatomic, strong) RTCVideoSource * tempVideoSource;
+
+///美颜工具
+@property (nonatomic, strong) MFPixelBufferHelper * helper;
 
 @property (nonatomic, strong) RTCPeerConnectionFactory *peerConnectionFactory;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTCPeerConnection *> *peerConnections;

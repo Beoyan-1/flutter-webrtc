@@ -653,7 +653,14 @@
             audioTrack.isEnabled = !mute.boolValue;
         }
         result(nil);
-    } 
+    }  else if ([@"setFilter" isEqualToString:call.method]) {
+        NSDictionary* argsMap = call.arguments;
+         if ([argsMap.allKeys containsObject:@"isEnable"]){
+             NSString * str = argsMap[@"isEnable"];
+             self.isBeauty = [str isEqualToString:@"1"];
+         }
+         result(nil);
+    }
 #if TARGET_OS_IPHONE
     else if ([@"enableSpeakerphone" isEqualToString:call.method]) {
         NSDictionary* argsMap = call.arguments;

@@ -1,11 +1,19 @@
 #import <objc/runtime.h>
 
 #import <WebRTC/WebRTC.h>
+#import <GPUImage/GPUImage.h>
 
 #import "FlutterRTCFrameCapturer.h"
 #import "FlutterRTCMediaStream.h"
 #import "FlutterRTCPeerConnection.h"
 #import "AudioUtils.h"
+
+
+#import "LFGPUImageBeautyFilter.h"
+#import "GPUImageGreenScreenFilter.h"
+
+
+
 
 @implementation AVCaptureDevice (Flutter)
 
@@ -20,6 +28,7 @@
 
 @end
 
+
 @implementation  FlutterWebRTCPlugin (RTCMediaStream)
 
 /**
@@ -31,6 +40,7 @@ typedef void (^NavigatorUserMediaErrorCallback)(NSString *errorType, NSString *e
  * {@link https://www.w3.org/TR/mediacapture-streams/#navigatorusermediasuccesscallback}
  */
 typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
+
 
 - (RTCMediaConstraints *)defaultMediaStreamConstraints {
     NSDictionary *mandatoryConstraints
@@ -339,19 +349,23 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
     if(possibleFps != 0){
         self._targetFps = possibleFps;
     }
+    
+
 
     if (videoDevice) {
         RTCVideoSource *videoSource = [self.peerConnectionFactory videoSource];
+        self.tempVideoSource = videoSource;
         if (self.videoCapturer) {
             [self.videoCapturer stopCapture];
         }
-        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:videoSource];
+        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:self];
         AVCaptureDeviceFormat *selectedFormat = [self selectFormatForDevice:videoDevice];
         NSInteger selectedFps = [self selectFpsForFormat:selectedFormat];
         [self.videoCapturer startCaptureWithDevice:videoDevice format:selectedFormat fps:selectedFps completionHandler:^(NSError *error) {
             if (error) {
                 NSLog(@"Start capture error: %@", [error localizedDescription]);
             }
+            NSLog(@"111111111111111");
         }];
         NSString *trackUUID = [[NSUUID UUID] UUIDString];
         RTCVideoTrack *videoTrack = [self.peerConnectionFactory videoTrackWithSource:videoSource trackId:trackUUID];
@@ -371,6 +385,116 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
         errorCallback(@"OverconstrainedError", /* errorMessage */ nil);
     }
 }
+
+//- (void)capturer:(RTC_OBJC_TYPE(RTCVideoCapturer) *)capturer
+//    didCaptureVideoFrame:(RTC_OBJC_TYPE(RTCVideoFrame) *)frame {
+//
+//    NSLog(@"我走了自己的代理");
+//    RTCCVPixelBuffer *tempbuffer = (RTCCVPixelBuffer *)frame.buffer;
+//    CVPixelBufferRef newBuffer = [self renderByGPUImage:tempbuffer.pixelBuffer];
+//    NSLog(@"22222222");
+//    RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
+//        [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:newBuffer];
+//    NSLog(@"33333333");
+//    CVPixelBufferRelease(newBuffer);
+//    RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
+//        [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:frame.rotation timeStampNs:frame.timeStampNs];
+//    NSLog(@"44444444");
+//    [self.tempVideoSource ceshiyixia:videoFrame];
+//
+//}
+
+
+- (void)didOutputPixelBuffer : (RTC_OBJC_TYPE(CVPixelBufferRef))pixelBuffer orientation:(RTC_OBJC_TYPE(RTCVideoRotation))orientation timeStampNs: (RTC_OBJC_TYPE(int64_t))timeStampNs{
+    CVPixelBufferRef newBuffer = [self renderByGPUImage:pixelBuffer];
+    NSLog(@"22222222");
+    RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
+        [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:newBuffer];
+    NSLog(@"33333333");
+    CVPixelBufferRelease(newBuffer);
+    RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
+        [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
+    NSLog(@"44444444");
+    [self.tempVideoSource ceshiyixia:videoFrame];
+}
+
+
+////  采集拿到的数据进行处理
+- (CVPixelBufferRef)renderByGPUImage:(CVPixelBufferRef)pixelBuffer {
+   CVPixelBufferRetain(pixelBuffer);
+   __block CVPixelBufferRef output = nil;
+   runSynchronouslyOnVideoProcessingQueue(^{
+       
+       [GPUImageContext useImageProcessingContext];
+       //        1.取到采集数据i420 CVPixelBufferRef->纹理
+       GLuint textureID = [self.helper convertYUVPixelBufferToTexture:pixelBuffer];
+       CGSize size = CGSizeMake(CVPixelBufferGetWidth(pixelBuffer),
+                                CVPixelBufferGetHeight(pixelBuffer));
+
+
+       //        2.GPUImage滤镜处理
+       [GPUImageContext setActiveShaderProgram:nil];
+       GPUImageTextureInput *textureInput = [[GPUImageTextureInput alloc] initWithTexture:textureID size:size];
+       
+       //美颜
+       LFGPUImageBeautyFilter * fliter = [[LFGPUImageBeautyFilter alloc] init];
+       fliter.beautyLevel = 0.7;
+       fliter.toneLevel = 1;
+       fliter.brightLevel = 0.5;
+       [textureInput addTarget:fliter];
+       
+       //素描
+//       GPUImageSketchFilter *fliter = [[GPUImageSketchFilter alloc] init];
+       
+//       //漫画
+//       GPUImageSmoothToonFilter *fliter1 = [[GPUImageSmoothToonFilter alloc] init];
+//
+//       //褐色
+//       GPUImageSepiaFilter * fliter = [[GPUImageSepiaFilter alloc] init];
+//
+//       [textureInput addTarget:fliter1];
+//
+//       [fliter1 addTarget:fliter];
+    
+       // First pass: face smoothing filter
+//       GPUImageBilateralFilter *bilateralFilter = [[GPUImageBilateralFilter alloc] init];
+//       bilateralFilter.distanceNormalizationFactor = 0.5;
+//       [textureInput addTarget:bilateralFilter];
+       
+       
+       
+    
+       
+       GPUImageTextureOutput *textureOutput = [[GPUImageTextureOutput alloc] init];
+//       [bilateralFilter addTarget:textureOutput];
+       
+       [fliter addTarget:textureOutput];
+       
+       [textureInput processTextureWithFrameTime:kCMTimeZero];
+       //       3. 处理后的纹理转pixelBuffer BGRA
+       output = [self.helper convertTextureToPixelBuffer:textureOutput.texture
+                                                        textureSize:size];
+       [textureOutput doneWithTexture];
+       glDeleteTextures(1, &textureID);
+   });
+   CVPixelBufferRelease(pixelBuffer);
+   return output;
+}
+//
+//
+//- (MFPixelBufferHelper *)helper
+//{
+//    if (!_helper){
+//        EAGLContext *context = [[GPUImageContext sharedImageProcessingContext] context];
+//        _helper = [[MFPixelBufferHelper alloc] initWithContext:context];
+//    }
+//    return _helper;
+//}
+
+
+
+
+
 
 -(void)mediaStreamRelease:(RTCMediaStream *)stream
 {
@@ -775,3 +899,4 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
 }
 
 @end
+
