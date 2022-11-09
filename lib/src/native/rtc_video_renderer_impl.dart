@@ -61,7 +61,6 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
     });
   }
 
-
   setSrcObject({MediaStream? stream, String? trackId}) {
     if (textureId == null) throw 'Call initialize before setting the stream';
 
@@ -77,7 +76,6 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
           : value.copyWith(renderVideo: renderVideo);
     });
   }
-  
 
   @override
   Future<void> dispose() async {

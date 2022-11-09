@@ -34,6 +34,12 @@ android {
         consumerProguardFiles 'proguard-rules.pro'
     }
 
+    externalNativeBuild {
+        cmake {
+            path 'src/main/java/com/cloudwebrtc/webrtc/cpp/CMakeLists.txt'
+        }
+    }
+
     lintOptions {
         disable 'InvalidPackage'
     }

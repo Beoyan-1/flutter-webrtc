@@ -150,4 +150,14 @@ class Helper {
     }
     track.enabled = !mute;
   }
+
+  static void setFilter(bool enable) async {
+    try {
+      await WebRTC.invokeMethod(
+          'setFilter', <String, dynamic>{'isEnable': enable ? '1' : '0'});
+    } on PlatformException catch (e) {
+      throw 'Unable to setFilter: ${e.message}';
+    }
+    return Future.value();
+  }
 }

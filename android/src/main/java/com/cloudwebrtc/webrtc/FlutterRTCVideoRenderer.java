@@ -154,7 +154,16 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
         setVideoTrack(videoTrack);
     }
-
+   /**
+     * Sets the {@code MediaStream} to be rendered by this {@code FlutterRTCVideoRenderer}.
+     * The implementation renders the first {@link VideoTrack}, if any, of the
+     * specified trackId
+     *
+     * @param mediaStream The {@code MediaStream} to be rendered by this
+     *                    {@code FlutterRTCVideoRenderer} or {@code null}.
+     * @param trackId The {@code trackId} to be rendered by this
+     *                    {@code FlutterRTCVideoRenderer} or {@code null}.
+     */
     public void setStream(MediaStream mediaStream,String trackId) {
         VideoTrack videoTrack;
         this.mediaStream = mediaStream;

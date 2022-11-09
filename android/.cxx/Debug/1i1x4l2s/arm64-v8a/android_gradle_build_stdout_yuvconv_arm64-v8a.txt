@@ -1,0 +1,2 @@
+ninja: Entering directory `/Users/beoyan/Documents/GitHub/flutter-webrtc-self/android/.cxx/Debug/1i1x4l2s/arm64-v8a'
+ninja: no work to do.
