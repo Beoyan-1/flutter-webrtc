@@ -388,7 +388,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
            CVPixelBufferRelease(newBuffer);
            RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
                [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
-           NSLog(@"44444444");
+        //    NSLog(@"44444444");
            [self.tempVideoSource ceshiyixia:videoFrame];
     }else{
         CVPixelBufferRetain(pixelBuffer);
