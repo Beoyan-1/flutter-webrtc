@@ -1,0 +1,3 @@
+ninja: Entering directory `/Users/beoyan/Documents/GitHub/flutter-webrtc-self/android/.cxx/Debug/1i1x4l2s/x86'
+[1/2] Building C object CMakeFiles/yuvconv.dir/yuvconv.c.o
+[2/2] Linking C shared library /Users/beoyan/Documents/GitHub/flutter-webrtc-self/example/build/flutter_webrtc_haoxin/intermediates/cxx/Debug/1i1x4l2s/obj/x86/libyuvconv.so
