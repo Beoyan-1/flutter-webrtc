@@ -343,11 +343,11 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
     }
 
     if (videoDevice) {
-        RTCVideoSource *videoSource = [self.peerConnectionFactory videoSource];
+        self.tempVideoSource = [self.peerConnectionFactory videoSource];
         if (self.videoCapturer) {
             [self.videoCapturer stopCapture];
         }
-        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:videoSource];
+        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:self];
         AVCaptureDeviceFormat *selectedFormat = [self selectFormatForDevice:videoDevice];
         NSInteger selectedFps = [self selectFpsForFormat:selectedFormat];
         [self.videoCapturer startCaptureWithDevice:videoDevice format:selectedFormat fps:selectedFps completionHandler:^(NSError *error) {
@@ -356,7 +356,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
             }
         }];
         NSString *trackUUID = [[NSUUID UUID] UUIDString];
-        RTCVideoTrack *videoTrack = [self.peerConnectionFactory videoTrackWithSource:videoSource trackId:trackUUID];
+        RTCVideoTrack *videoTrack = [self.peerConnectionFactory videoTrackWithSource:self.tempVideoSource trackId:trackUUID];
         
         __weak RTCCameraVideoCapturer* capturer = self.videoCapturer;
         self.videoCapturerStopHandlers[videoTrack.trackId] = ^(CompletionHandler handler) {
