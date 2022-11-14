@@ -7,6 +7,9 @@
 #import "FlutterRTCPeerConnection.h"
 #import "AudioUtils.h"
 
+#import <GPUImage/GPUImage.h>
+#import "LFGPUImageBeautyFilter.h"
+
 @implementation AVCaptureDevice (Flutter)
 
 - (NSString*)positionString {
@@ -375,20 +378,29 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
 
 - (void)didOutputPixelBuffer : (RTC_OBJC_TYPE(CVPixelBufferRef))pixelBuffer orientation:(RTC_OBJC_TYPE(RTCVideoRotation))orientation timeStampNs: (RTC_OBJC_TYPE(int64_t))timeStampNs{
     
-    CVPixelBufferRef newBuffer = pixelBuffer;
     if (self.isBeauty){
-        //处理美颜数据
-        newBuffer = [self renderByGPUImage:pixelBuffer];
+       //处理美颜数据
+        CVPixelBufferRef newBuffer = [self renderByGPUImage:pixelBuffer];
+           NSLog(@"22222222");
+           RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
+               [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:newBuffer];
+           NSLog(@"33333333");
+           CVPixelBufferRelease(newBuffer);
+           RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
+               [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
+           NSLog(@"44444444");
+           [self.tempVideoSource ceshiyixia:videoFrame];
+    }else{
+        CVPixelBufferRetain(pixelBuffer);
+        RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
+            [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:pixelBuffer];
+        CVPixelBufferRelease(pixelBuffer);
+        //生成videoFrame
+        RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
+            [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
+        //提交到编码
+        [self.tempVideoSource ceshiyixia:videoFrame];
     }
-    //转化 RTCCVPixelBuffer
-    RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
-        [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:newBuffer];
-    CVPixelBufferRelease(newBuffer);
-    //生成videoFrame
-    RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
-        [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
-    //提交到编码
-    [self.tempVideoSource ceshiyixia:videoFrame];
 }
 
 

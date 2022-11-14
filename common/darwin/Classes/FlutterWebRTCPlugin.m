@@ -9,6 +9,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <WebRTC/WebRTC.h>
 
+#import <GPUImage/GPUImage.h>
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wprotocol"
 
@@ -1780,5 +1782,14 @@
         @"receiver": [self receiverToMap:transceiver.receiver]
     };
     return params;
+}
+
+- (MFPixelBufferHelper *)helper
+{
+    if (!_helper){
+        EAGLContext *context = [[GPUImageContext sharedImageProcessingContext] context];
+        _helper = [[MFPixelBufferHelper alloc] initWithContext:context];
+    }
+    return _helper;
 }
 @end
