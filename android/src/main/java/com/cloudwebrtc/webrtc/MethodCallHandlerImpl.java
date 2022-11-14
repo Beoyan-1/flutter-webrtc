@@ -705,6 +705,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         }
         break;
       }
+      case "setFilter":{
+        String isEnable = call.argument("isEnable");
+        getUserMediaImpl.setFilter(isEnable.equals("1"));
+        result.success(null);
+        break;
+      }
       default:
         result.notImplemented();
         break;

@@ -1,4 +1,11 @@
-library flutter_webrtc;
+/*
+ * @Author: Beoyan
+ * @Date: 2022-11-14 09:31:54
+ * @LastEditTime: 2022-11-14 09:34:22
+ * @LastEditors: Beoyan
+ * @Description: 
+ */
+library flutter_webrtc_haoxin;
 
 export 'package:webrtc_interface/webrtc_interface.dart'
     hide MediaDevices, MediaRecorder, Navigator;

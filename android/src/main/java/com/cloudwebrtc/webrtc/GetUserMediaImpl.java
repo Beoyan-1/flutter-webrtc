@@ -109,7 +109,7 @@ class GetUserMediaImpl {
     private OutputAudioSamplesInterceptor outputSamplesInterceptor = null;
     JavaAudioDeviceModule audioDeviceModule;
     private final SparseArray<MediaRecorderImpl> mediaRecorders = new SparseArray<>();
-
+    private FilterProcessor processor;
     public void screenRequestPermissions(ResultReceiver resultReceiver) {
         final Activity activity = stateProvider.getActivity();
         if (activity == null) {
@@ -683,6 +683,8 @@ class GetUserMediaImpl {
         String threadName = Thread.currentThread().getName() + "_texture_camera_thread";
         SurfaceTextureHelper surfaceTextureHelper =
                 SurfaceTextureHelper.create(threadName, EglUtils.getRootEglBaseContext());
+        processor = new  FilterProcessor(applicationContext,surfaceTextureHelper);
+        videoSource.setVideoProcessor(processor);//设置处理器
         videoCapturer.initialize(
                 surfaceTextureHelper, applicationContext, videoSource.getCapturerObserver());
 
@@ -1055,6 +1057,14 @@ class GetUserMediaImpl {
                         item.getValue().fps
                 );
             }
+        }
+    }
+
+    public void setFilter(boolean isEnable){
+        if (isEnable){
+            processor.enable();
+        }else {
+            processor.disable();
         }
     }
 
