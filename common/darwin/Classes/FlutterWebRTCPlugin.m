@@ -1054,7 +1054,15 @@
     } else  if ([@"getDesktopSourceThumbnail" isEqualToString:call.method]){
          NSDictionary* argsMap = call.arguments;
         [self getDesktopSourceThumbnail:argsMap result:result];
-    } else {
+    } else if ([@"setFilter" isEqualToString:call.method]) {
+        //控制美颜
+        NSDictionary* argsMap = call.arguments;
+         if ([argsMap.allKeys containsObject:@"isEnable"]){
+             NSString * str = argsMap[@"isEnable"];
+             self.isBeauty = [str isEqualToString:@"1"];
+         }
+         result(nil);
+    }else {
         result(FlutterMethodNotImplemented);
     }
 }

@@ -373,6 +373,89 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream *mediaStream);
     }
 }
 
+- (void)didOutputPixelBuffer : (RTC_OBJC_TYPE(CVPixelBufferRef))pixelBuffer orientation:(RTC_OBJC_TYPE(RTCVideoRotation))orientation timeStampNs: (RTC_OBJC_TYPE(int64_t))timeStampNs{
+    
+    CVPixelBufferRef newBuffer = pixelBuffer;
+    if (self.isBeauty){
+        //处理美颜数据
+        newBuffer = [self renderByGPUImage:pixelBuffer];
+    }
+    //转化 RTCCVPixelBuffer
+    RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
+        [[RTC_OBJC_TYPE(RTCCVPixelBuffer) alloc] initWithPixelBuffer:newBuffer];
+    CVPixelBufferRelease(newBuffer);
+    //生成videoFrame
+    RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
+        [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
+    //提交到编码
+    [self.tempVideoSource ceshiyixia:videoFrame];
+}
+
+
+////  采集拿到的数据进行处理
+- (CVPixelBufferRef)renderByGPUImage:(CVPixelBufferRef)pixelBuffer {
+   CVPixelBufferRetain(pixelBuffer);
+   __block CVPixelBufferRef output = nil;
+   runSynchronouslyOnVideoProcessingQueue(^{
+       
+       [GPUImageContext useImageProcessingContext];
+       //        1.取到采集数据i420 CVPixelBufferRef->纹理
+       GLuint textureID = [self.helper convertYUVPixelBufferToTexture:pixelBuffer];
+       CGSize size = CGSizeMake(CVPixelBufferGetWidth(pixelBuffer),
+                                CVPixelBufferGetHeight(pixelBuffer));
+
+
+       //        2.GPUImage滤镜处理
+       [GPUImageContext setActiveShaderProgram:nil];
+       GPUImageTextureInput *textureInput = [[GPUImageTextureInput alloc] initWithTexture:textureID size:size];
+       
+       //美颜
+       LFGPUImageBeautyFilter * fliter = [[LFGPUImageBeautyFilter alloc] init];
+       fliter.beautyLevel = 0.7;
+       fliter.toneLevel = 1;
+       fliter.brightLevel = 0.5;
+       [textureInput addTarget:fliter];
+       
+       //素描
+//       GPUImageSketchFilter *fliter = [[GPUImageSketchFilter alloc] init];
+       
+//       //漫画
+//       GPUImageSmoothToonFilter *fliter1 = [[GPUImageSmoothToonFilter alloc] init];
+//
+//       //褐色
+//       GPUImageSepiaFilter * fliter = [[GPUImageSepiaFilter alloc] init];
+//
+//       [textureInput addTarget:fliter1];
+//
+//       [fliter1 addTarget:fliter];
+    
+       // First pass: face smoothing filter
+//       GPUImageBilateralFilter *bilateralFilter = [[GPUImageBilateralFilter alloc] init];
+//       bilateralFilter.distanceNormalizationFactor = 0.5;
+//       [textureInput addTarget:bilateralFilter];
+       
+       
+       
+    
+       
+       GPUImageTextureOutput *textureOutput = [[GPUImageTextureOutput alloc] init];
+//       [bilateralFilter addTarget:textureOutput];
+       
+       [fliter addTarget:textureOutput];
+       
+       [textureInput processTextureWithFrameTime:kCMTimeZero];
+       //       3. 处理后的纹理转pixelBuffer BGRA
+       output = [self.helper convertTextureToPixelBuffer:textureOutput.texture
+                                                        textureSize:size];
+       [textureOutput doneWithTexture];
+       glDeleteTextures(1, &textureID);
+   });
+   CVPixelBufferRelease(pixelBuffer);
+   return output;
+}
+
+
+
 -(void)mediaStreamRelease:(RTCMediaStream *)stream
 {
     if (stream) {
