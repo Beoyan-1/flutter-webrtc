@@ -74,7 +74,7 @@ EncodableMap rtpParametersToMap(
     map[EncodableValue("minBitrate")] =
         EncodableValue(encoding->min_bitrate_bps());
     map[EncodableValue("maxFramerate")] =
-        EncodableValue(encoding->max_framerate());
+        EncodableValue((int)encoding->max_framerate());
     map[EncodableValue("scaleResolutionDownBy")] =
         EncodableValue(encoding->scale_resolution_down_by());
     map[EncodableValue("ssrc")] = EncodableValue((long)encoding->ssrc());
@@ -271,9 +271,10 @@ void FlutterPeerConnection::RTCPeerConnectionDispose(
   result->Success();
 }
 
-void FlutterPeerConnection::CreateOffer(const EncodableMap& constraintsMap,
-                                        RTCPeerConnection* pc,
-                                        std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::CreateOffer(
+    const EncodableMap& constraintsMap,
+    RTCPeerConnection* pc,
+    std::unique_ptr<MethodResultProxy> result) {
   scoped_refptr<RTCMediaConstraints> constraints =
       base_->ParseMediaConstraints(constraintsMap);
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
@@ -290,9 +291,10 @@ void FlutterPeerConnection::CreateOffer(const EncodableMap& constraintsMap,
       constraints);
 }
 
-void FlutterPeerConnection::CreateAnswer(const EncodableMap& constraintsMap,
-                                         RTCPeerConnection* pc,
-                                         std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::CreateAnswer(
+    const EncodableMap& constraintsMap,
+    RTCPeerConnection* pc,
+    std::unique_ptr<MethodResultProxy> result) {
   scoped_refptr<RTCMediaConstraints> constraints =
       base_->ParseMediaConstraints(constraintsMap);
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
@@ -725,8 +727,39 @@ void FlutterPeerConnection::RtpTransceiverSetDirection(
   }
 }
 
-void FlutterPeerConnection::GetSenders(RTCPeerConnection* pc,
-                                       std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::RtpTransceiverSetCodecPreferences(
+    RTCPeerConnection* pc,
+    std::string rtpTransceiverId,
+    const EncodableList codecs,
+    std::unique_ptr<MethodResultProxy> result) {
+  std::shared_ptr<MethodResultProxy> result_ptr(result.release());
+  auto transceiver = getRtpTransceiverById(pc, rtpTransceiverId);
+  if (nullptr == transceiver.get()) {
+    result_ptr->Error("RtpTransceiverSetCodecPreferences", " transceiver is null ");
+    return;
+  }
+  std::vector<scoped_refptr<RTCRtpCodecCapability>> codecList;
+  for(auto codec : codecs) {
+    auto codecMap = GetValue<EncodableMap>(codec);
+    auto codecMimeType = findString(codecMap, "mimeType");
+    auto codecClockRate = findInt(codecMap, "clockRate");
+    auto codecNumChannels = findInt(codecMap, "channels");
+    auto codecSdpFmtpLine = findString(codecMap, "sdpFmtpLine");
+    auto codecCapability = RTCRtpCodecCapability::Create();
+    if(codecSdpFmtpLine != std::string())
+      codecCapability->set_sdp_fmtp_line(codecSdpFmtpLine);
+    codecCapability->set_clock_rate(codecClockRate);
+    if (codecNumChannels != -1)
+      codecCapability->set_channels(codecNumChannels);
+    codecCapability->set_mime_type(codecMimeType);
+    codecList.push_back(codecCapability);
+  }
+  transceiver->SetCodecPreferences(codecList);
+ }
+
+void FlutterPeerConnection::GetSenders(
+    RTCPeerConnection* pc,
+    std::unique_ptr<MethodResultProxy> result) {
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
 
   EncodableMap map;
@@ -752,57 +785,58 @@ void FlutterPeerConnection::AddIceCandidate(
 EncodableMap statsToMap(const scoped_refptr<MediaRTCStats>& stats) {
   EncodableMap report_map;
   report_map[EncodableValue("id")] = EncodableValue(stats->id().std_string());
-  report_map[EncodableValue("type")] = EncodableValue(stats->type().std_string());
+  report_map[EncodableValue("type")] =
+      EncodableValue(stats->type().std_string());
   report_map[EncodableValue("timestamp")] =
       EncodableValue(double(stats->timestamp_us()));
   EncodableMap values;
   auto members = stats->Members();
   for (int i = 0; i < members.size(); i++) {
     auto member = members[i];
-    if(!member->IsDefined()) {
+    if (!member->IsDefined()) {
       continue;
     }
-    switch (member->GetType())
-    {
-    case RTCStatsMember::Type::kBool:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue(member->ValueBool());
-      break;
-    case RTCStatsMember::Type::kInt32:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue(member->ValueInt32());
-      break;
-    case RTCStatsMember::Type::kUint32:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue((int64_t)member->ValueUint32());
-      break;
-    case RTCStatsMember::Type::kInt64:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue(member->ValueInt64());
-      break;
-    case RTCStatsMember::Type::kUint64:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue((int64_t)member->ValueUint64());
-      break;
-    case RTCStatsMember::Type::kDouble:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue(member->ValueDouble());
-      break;
-    case RTCStatsMember::Type::kString:
-      values[EncodableValue(member->GetName().std_string())] =
-          EncodableValue(member->ValueString().std_string());
-      break;
-    default:
-      break;
+    switch (member->GetType()) {
+      case RTCStatsMember::Type::kBool:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue(member->ValueBool());
+        break;
+      case RTCStatsMember::Type::kInt32:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue(member->ValueInt32());
+        break;
+      case RTCStatsMember::Type::kUint32:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue((int64_t)member->ValueUint32());
+        break;
+      case RTCStatsMember::Type::kInt64:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue(member->ValueInt64());
+        break;
+      case RTCStatsMember::Type::kUint64:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue((int64_t)member->ValueUint64());
+        break;
+      case RTCStatsMember::Type::kDouble:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue(member->ValueDouble());
+        break;
+      case RTCStatsMember::Type::kString:
+        values[EncodableValue(member->GetName().std_string())] =
+            EncodableValue(member->ValueString().std_string());
+        break;
+      default:
+        break;
     }
   }
   report_map[EncodableValue("values")] = EncodableValue(values);
   return report_map;
 }
 
-void FlutterPeerConnection::GetStats(const std::string& track_id,
-                                     RTCPeerConnection* pc,
-                                     std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::GetStats(
+    const std::string& track_id,
+    RTCPeerConnection* pc,
+    std::unique_ptr<MethodResultProxy> result) {
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
   scoped_refptr<RTCMediaTrack> track = base_->MediaTracksForId(track_id);
   if (track != nullptr) {
@@ -849,23 +883,23 @@ void FlutterPeerConnection::GetStats(const std::string& track_id,
         return;
       }
     }
-    if(!found) {
+    if (!found) {
       result_ptr->Error("GetStats", "Track not found");
     }
   } else {
     pc->GetStats(
         [result_ptr](const vector<scoped_refptr<MediaRTCStats>> reports) {
-        std::vector<EncodableValue> list;
-        for (int i = 0; i < reports.size(); i++) {
-          list.push_back(EncodableValue(statsToMap(reports[i])));
-        }
-        EncodableMap params;
-        params[EncodableValue("stats")] = EncodableValue(list);
-        result_ptr->Success(EncodableValue(params));
-      },
+          std::vector<EncodableValue> list;
+          for (int i = 0; i < reports.size(); i++) {
+            list.push_back(EncodableValue(statsToMap(reports[i])));
+          }
+          EncodableMap params;
+          params[EncodableValue("stats")] = EncodableValue(list);
+          result_ptr->Success(EncodableValue(params));
+        },
         [result_ptr](const char* error) {
           result_ptr->Error("GetStats", error);
-      });
+        });
   }
 }
 
@@ -899,10 +933,11 @@ void FlutterPeerConnection::MediaStreamRemoveTrack(
   result_ptr->Success();
 }
 
-void FlutterPeerConnection::AddTrack(RTCPeerConnection* pc,
-                                     scoped_refptr<RTCMediaTrack> track,
-                                     std::list<std::string> streamIds,
-                                     std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::AddTrack(
+    RTCPeerConnection* pc,
+    scoped_refptr<RTCMediaTrack> track,
+    std::list<std::string> streamIds,
+    std::unique_ptr<MethodResultProxy> result) {
   std::shared_ptr<MethodResultProxy> result_ptr(result.release());
   std::string kind = track->kind().std_string();
   std::vector<string> streamids;
@@ -938,9 +973,10 @@ FlutterPeerConnection::GetRtpSenderById(RTCPeerConnection* pc, std::string id) {
   return result;
 }
 
-void FlutterPeerConnection::RemoveTrack(RTCPeerConnection* pc,
-                                        std::string senderId,
-                                        std::unique_ptr<MethodResultProxy> result) {
+void FlutterPeerConnection::RemoveTrack(
+    RTCPeerConnection* pc,
+    std::string senderId,
+    std::unique_ptr<MethodResultProxy> result) {
   auto sender = GetRtpSenderById(pc, senderId);
   if (nullptr == sender.get()) {
     result->Error("RemoveTrack", "not find RtpSender ");

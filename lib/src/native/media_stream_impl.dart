@@ -4,7 +4,6 @@ import 'package:flutter_webrtc_haoxin/flutter_webrtc_haoxin.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_track_impl.dart';
-import 'utils.dart';
 
 class MediaStreamNative extends MediaStream {
   MediaStreamNative(String streamId, String ownerTag)

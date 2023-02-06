@@ -15,8 +15,9 @@ FlutterWebRTC::FlutterWebRTC(FlutterWebRTCPlugin* plugin)
 
 FlutterWebRTC::~FlutterWebRTC() {}
 
-void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
-                                     std::unique_ptr<MethodResultProxy> result) {
+void FlutterWebRTC::HandleMethodCall(
+    const MethodCallProxy& method_call,
+    std::unique_ptr<MethodResultProxy> result) {
   if (method_call.method_name().compare("createPeerConnection") == 0) {
     if (!method_call.arguments()) {
       result->Error("Bad Arguments", "Null arguments received");
@@ -260,10 +261,10 @@ void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
 
     SdpParseError error;
     int sdpMLineIndex = findInt(constraints, "sdpMLineIndex");
-    scoped_refptr<RTCIceCandidate> rtc_candidate =
-        RTCIceCandidate::Create(findString(constraints, "candidate").c_str(),
-                                findString(constraints, "sdpMid").c_str(),
-                                sdpMLineIndex == -1 ? 0 : sdpMLineIndex, &error);
+    scoped_refptr<RTCIceCandidate> rtc_candidate = RTCIceCandidate::Create(
+        findString(constraints, "candidate").c_str(),
+        findString(constraints, "sdpMid").c_str(),
+        sdpMLineIndex == -1 ? 0 : sdpMLineIndex, &error);
 
     AddIceCandidate(rtc_candidate.get(), pc, std::move(result));
   } else if (method_call.method_name().compare("getStats") == 0) {
@@ -274,11 +275,10 @@ void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
     const EncodableMap params =
         GetValue<EncodableMap>(*method_call.arguments());
     const std::string peerConnectionId = findString(params, "peerConnectionId");
-     const std::string track_id = findString(params, "trackId");
+    const std::string track_id = findString(params, "trackId");
     RTCPeerConnection* pc = PeerConnectionForId(peerConnectionId);
     if (pc == nullptr) {
-      result->Error("getStatsFailed",
-                    "getStats() peerConnection is null");
+      result->Error("getStatsFailed", "getStats() peerConnection is null");
       return;
     }
     GetStats(track_id, pc, std::move(result));
@@ -961,16 +961,14 @@ void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
 
     RTCPeerConnection* pc = PeerConnectionForId(peerConnectionId);
     if (pc == nullptr) {
-      result->Error("canInsertDtmf",
-                    "canInsertDtmf() peerConnection is null");
+      result->Error("canInsertDtmf", "canInsertDtmf() peerConnection is null");
       return;
     }
 
     auto rtpSender = GetRtpSenderById(pc, rtpSenderId);
 
     if (rtpSender == nullptr) {
-      result->Error("sendDtmf",
-                    "sendDtmf() rtpSender is null");
+      result->Error("sendDtmf", "sendDtmf() rtpSender is null");
       return;
     }
     auto dtmfSender = rtpSender->dtmf_sender();
@@ -989,19 +987,17 @@ void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
     const std::string tone = findString(params, "tone");
     int duration = findInt(params, "duration");
     int gap = findInt(params, "gap");
-  
+
     RTCPeerConnection* pc = PeerConnectionForId(peerConnectionId);
     if (pc == nullptr) {
-      result->Error("sendDtmf",
-                    "sendDtmf() peerConnection is null");
+      result->Error("sendDtmf", "sendDtmf() peerConnection is null");
       return;
     }
 
     auto rtpSender = GetRtpSenderById(pc, rtpSenderId);
 
     if (rtpSender == nullptr) {
-      result->Error("sendDtmf",
-                    "sendDtmf() rtpSender is null");
+      result->Error("sendDtmf", "sendDtmf() rtpSender is null");
       return;
     }
 
@@ -1009,6 +1005,106 @@ void FlutterWebRTC::HandleMethodCall(const MethodCallProxy& method_call,
     dtmfSender->InsertDtmf(tone, duration, gap);
 
     result->Success();
+  } else if (method_call.method_name().compare("getRtpSenderCapabilities") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+
+    RTCMediaType mediaType = RTCMediaType::AUDIO;
+    const std::string kind = findString(params, "kind");
+    if (0 == kind.compare("video")) {
+      mediaType = RTCMediaType::VIDEO;
+    } else if (0 == kind.compare("audio")) {
+      mediaType = RTCMediaType::AUDIO;
+    } else {
+      result->Error("getRtpSenderCapabilities",
+                    "getRtpSenderCapabilities() kind is null or empty");
+      return;
+    }
+    auto capabilities = factory_->GetRtpSenderCapabilities(mediaType);
+    EncodableMap map;
+    EncodableList codecsList;
+    for(auto codec : capabilities->codecs().std_vector()) {
+      EncodableMap codecMap;
+      codecMap[EncodableValue("mimeType")] = EncodableValue(codec->mime_type().std_string());
+      codecMap[EncodableValue("clockRate")] = EncodableValue(codec->clock_rate());
+      codecMap[EncodableValue("channels")] = EncodableValue(codec->channels());
+      codecMap[EncodableValue("sdpFmtpLine")] = EncodableValue(codec->sdp_fmtp_line().std_string());
+      codecsList.push_back(EncodableValue(codecMap));
+    }
+    map[EncodableValue("codecs")] = EncodableValue(codecsList);
+    map[EncodableValue("headerExtensions")] = EncodableValue(EncodableList());
+    map[EncodableValue("fecMechanisms")] = EncodableValue(EncodableList());
+    
+    result->Success(EncodableValue(map));
+  } else if (method_call.method_name().compare("getRtpReceiverCapabilities") == 0) {
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+
+    RTCMediaType mediaType = RTCMediaType::AUDIO;
+    const std::string kind = findString(params, "kind");
+    if (0 == kind.compare("video")) {
+      mediaType = RTCMediaType::VIDEO;
+    } else if (0 == kind.compare("audio")) {
+      mediaType = RTCMediaType::AUDIO;
+    } else {
+      result->Error("getRtpSenderCapabilities",
+                    "getRtpSenderCapabilities() kind is null or empty");
+      return;
+    }
+    auto capabilities = factory_->GetRtpReceiverCapabilities(mediaType);
+    EncodableMap map;
+    EncodableList codecsList;
+    for (auto codec : capabilities->codecs().std_vector()) {
+      EncodableMap codecMap;
+      codecMap[EncodableValue("mimeType")] =
+          EncodableValue(codec->mime_type().std_string());
+      codecMap[EncodableValue("clockRate")] =
+          EncodableValue(codec->clock_rate());
+      codecMap[EncodableValue("channels")] = EncodableValue(codec->channels());
+      codecMap[EncodableValue("sdpFmtpLine")] =
+          EncodableValue(codec->sdp_fmtp_line().std_string());
+      codecsList.push_back(EncodableValue(codecMap));
+    }
+    map[EncodableValue("codecs")] = EncodableValue(codecsList);
+    map[EncodableValue("headerExtensions")] = EncodableValue(EncodableList());
+    map[EncodableValue("fecMechanisms")] = EncodableValue(EncodableList());
+
+    result->Success(EncodableValue(map));
+  } else if (method_call.method_name().compare("setCodecPreferences") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null arguments received");
+      return;
+    }
+   const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const std::string peerConnectionId = findString(params, "peerConnectionId");
+    RTCPeerConnection* pc = PeerConnectionForId(peerConnectionId);
+    if (pc == nullptr) {
+      result->Error("setCodecPreferences",
+                    "setCodecPreferences() peerConnection is null");
+      return;
+    }
+
+    const std::string rtpTransceiverId = findString(params, "transceiverId");
+    if (0 < rtpTransceiverId.size()) {
+      if (pc == nullptr) {
+        result->Error("setCodecPreferences",
+                      "setCodecPreferences() rtpTransceiverId is null or empty");
+        return;
+      }
+    }
+
+    const EncodableList codecs = findList(params, "codecs");
+    if (codecs == EncodableList()) {
+      result->Error("Bad Arguments", "Codecs is required");
+      return;
+    }
+    RtpTransceiverSetCodecPreferences(pc, rtpTransceiverId, codecs,
+                                      std::move(result));
   } else {
     result->NotImplemented();
   }
