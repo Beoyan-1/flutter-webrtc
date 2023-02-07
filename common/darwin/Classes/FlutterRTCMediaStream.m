@@ -402,7 +402,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
            RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
                [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
         //    NSLog(@"44444444");
-           [self.tempVideoSource ceshiyixia:videoFrame];
+           [self.tempVideoSource didCaptureVideoFrame:videoFrame];
     }else{
         CVPixelBufferRetain(pixelBuffer);
         RTC_OBJC_TYPE(RTCCVPixelBuffer) *rtcPixelBuffer =
@@ -412,7 +412,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
         RTC_OBJC_TYPE(RTCVideoFrame) *videoFrame =
             [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:orientation timeStampNs:timeStampNs];
         //提交到编码
-        [self.tempVideoSource ceshiyixia:videoFrame];
+        [self.tempVideoSource didCaptureVideoFrame:videoFrame];
     }
 }
 

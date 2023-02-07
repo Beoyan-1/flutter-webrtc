@@ -2,7 +2,7 @@
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html
 #
 Pod::Spec.new do |s|
-  s.name             = 'flutter_webrtc'
+  s.name             = 'flutter_webrtc_haoxin'
   s.version          = '0.9.20'
   s.summary          = 'Flutter WebRTC plugin for iOS.'
   s.description      = <<-DESC
@@ -17,6 +17,6 @@ A new flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'WebRTC_HX'
   s.dependency 'GPUImage'
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '12.0'
   s.static_framework = true
 end
