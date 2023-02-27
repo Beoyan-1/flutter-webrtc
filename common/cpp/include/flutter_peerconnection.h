@@ -104,10 +104,6 @@ class FlutterPeerConnection {
   void GetReceivers(RTCPeerConnection* pc,
                     std::unique_ptr<MethodResultProxy> result);
 
-  void RtpSenderDispose(RTCPeerConnection* pc,
-                        std::string rtpSenderId,
-                        std::unique_ptr<MethodResultProxy> result);
-
   void RtpSenderSetTrack(RTCPeerConnection* pc,
                          RTCMediaTrack* track,
                          std::string rtpSenderId,
@@ -152,10 +148,11 @@ class FlutterPeerConnection {
                                   std::string direction,
                                   std::unique_ptr<MethodResultProxy> result);
 
-  void RtpTransceiverSetCodecPreferences(RTCPeerConnection* pc,
-                                  std::string rtpTransceiverId,
-                                  const EncodableList codecs,
-                                  std::unique_ptr<MethodResultProxy> result);
+  void RtpTransceiverSetCodecPreferences(
+      RTCPeerConnection* pc,
+      std::string rtpTransceiverId,
+      const EncodableList codecs,
+      std::unique_ptr<MethodResultProxy> result);
 
   void GetSenders(RTCPeerConnection* pc,
                   std::unique_ptr<MethodResultProxy> result);

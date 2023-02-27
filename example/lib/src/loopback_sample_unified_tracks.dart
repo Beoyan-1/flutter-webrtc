@@ -27,7 +27,7 @@ class _MyAppState extends State<LoopBackSampleUnifiedTracks> {
   Timer? _timer;
   final _configuration = <String, dynamic>{
     'iceServers': [
-      //{'url': 'stun:stun.l.google.com:19302'},
+      {'urls': 'stun:stun.l.google.com:19302'},
     ],
     'sdpSemantics': 'unified-plan'
   };
@@ -79,8 +79,6 @@ class _MyAppState extends State<LoopBackSampleUnifiedTracks> {
   void _cleanUp() async {
     try {
       await _localStream?.dispose();
-      await _videoSender?.dispose();
-      await _audioSender?.dispose();
       await _remotePeerConnection?.close();
       await _remotePeerConnection?.dispose();
       _remotePeerConnection = null;

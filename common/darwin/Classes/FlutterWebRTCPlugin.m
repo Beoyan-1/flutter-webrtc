@@ -1043,27 +1043,6 @@
     }
     [sender setTrack:track];
     result(nil);
-  } else if ([@"rtpSenderDispose" isEqualToString:call.method]) {
-    NSDictionary* argsMap = call.arguments;
-    NSString* peerConnectionId = argsMap[@"peerConnectionId"];
-    NSString* senderId = argsMap[@"rtpSenderId"];
-    RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
-    if (peerConnection == nil) {
-      result([FlutterError
-          errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
-                message:[NSString stringWithFormat:@"Error: peerConnection not found!"]
-                details:nil]);
-      return;
-    }
-    RTCRtpSender* sender = [self getRtpSenderById:peerConnection Id:senderId];
-    if (sender == nil) {
-      result([FlutterError errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
-                                 message:[NSString stringWithFormat:@"Error: sender not found!"]
-                                 details:nil]);
-      return;
-    }
-    [peerConnection removeTrack:sender];
-    result(nil);
   } else if ([@"getSenders" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
@@ -1130,7 +1109,7 @@
   } else if ([@"setCodecPreferences" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     [self transceiverSetCodecPreferences:argsMap result:result];
-  }  else if ([@"getRtpReceiverCapabilities" isEqualToString:call.method]) {
+  } else if ([@"getRtpReceiverCapabilities" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     [self peerConnectionGetRtpReceiverCapabilities:argsMap result:result];
   } else if ([@"getRtpSenderCapabilities" isEqualToString:call.method]) {
@@ -1474,7 +1453,7 @@
     BOOL srtpEnableAes128Sha1_32CryptoCipher = NO;
 
     if (options[@"enableGcmCryptoSuites"] != nil &&
-                [options[@"enableGcmCryptoSuites"] isKindOfClass:[NSNumber class]]) {
+        [options[@"enableGcmCryptoSuites"] isKindOfClass:[NSNumber class]]) {
       NSNumber* value = options[@"enableGcmCryptoSuites"];
       srtpEnableGcmCryptoSuites = [value boolValue];
     }
