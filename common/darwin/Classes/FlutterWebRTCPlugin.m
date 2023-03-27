@@ -5,11 +5,11 @@
 #import "FlutterRTCMediaStream.h"
 #import "FlutterRTCPeerConnection.h"
 #import "FlutterRTCVideoRenderer.h"
+#import "FlutterRTCBeautyideoCapturer.h"
 
 #import <AVFoundation/AVFoundation.h>
 #import <WebRTC/WebRTC.h>
 
-#import <GPUImage/GPUImage.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wprotocol"
@@ -1116,13 +1116,17 @@
     NSDictionary* argsMap = call.arguments;
     [self peerConnectionGetRtpSenderCapabilities:argsMap result:result];
   } else if ([@"setFilter" isEqualToString:call.method]) {
-        //控制美颜
-        NSDictionary* argsMap = call.arguments;
-         if ([argsMap.allKeys containsObject:@"isEnable"]){
-             NSString * str = argsMap[@"isEnable"];
-             self.isBeauty = [str isEqualToString:@"1"];
-         }
-         result(nil);
+      //控制美颜
+      NSDictionary* argsMap = call.arguments;
+       if ([argsMap.allKeys containsObject:@"isEnable"]){
+           NSString * str = argsMap[@"isEnable"];
+           
+           if ([self.videoCapturer isKindOfClass:[FlutterRTCBeautyideoCapturer class]]){
+               FlutterRTCBeautyideoCapturer * temp = (FlutterRTCBeautyideoCapturer *)self.videoCapturer;
+               temp.isBeauty = [str isEqualToString:@"1"];
+           }
+       }
+       result(nil);
   } else {
     result(FlutterMethodNotImplemented);
   }
