@@ -1857,12 +1857,4 @@
   return params;
 }
 
-- (MFPixelBufferHelper *)helper
-{
-    if (!_helper){
-        EAGLContext *context = [[GPUImageContext sharedImageProcessingContext] context];
-        _helper = [[MFPixelBufferHelper alloc] initWithContext:context];
-    }
-    return _helper;
-}
 @end
