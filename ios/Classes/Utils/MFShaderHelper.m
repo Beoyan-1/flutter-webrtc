@@ -90,8 +90,11 @@
 // 编译一个 shader，并返回 shader 的 id
 + (GLuint)compileShaderWithName:(NSString *)name type:(GLenum)shaderType {
     // 查找 shader 文件
+    NSString *temp = [[NSBundle mainBundle] pathForResource:@"FlutterWbertcBeauty" ofType:@"bundle"];
     NSString * type = shaderType == GL_VERTEX_SHADER ? @"vsh" : @"fsh";
-    NSString *shaderPath = [[NSBundle mainBundle] pathForResource:name ofType:type]; // 根据不同的类型确定后缀名
+    NSString * shaderPath = [NSString stringWithFormat:@"%@/%@.%@",temp,name,type];
+    
+//    NSString *shaderPath = [[NSBundle mainBundle] pathForResource:name ofType:type]; // 根据不同的类型确定后缀名
     NSError *error;
     NSString *shaderString = [NSString stringWithContentsOfFile:shaderPath encoding:NSUTF8StringEncoding error:&error];
     if (!shaderString) {
