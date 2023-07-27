@@ -477,8 +477,12 @@ class GetUserMediaImpl {
                         info.fps = DEFAULT_FPS;
                         info.isScreenCapture = true;
                         info.capturer = videoCapturer;
-                        ///11123344447747746664664
-                        videoCapturer.startCapture(info.width, info.height, info.fps);
+                        try{
+                            videoCapturer.startCapture(info.width, info.height, info.fps);
+                        }catch (Exception e){
+                            resultError("getDisplayMediaFailed", " capture the screen fail", result);
+                            return;
+                        }
                         Log.d(TAG, "OrientationAwareScreenCapturer.startCapture: " + info.width + "x" + info.height + "@" + info.fps);
 
                         String trackId = stateProvider.getNextTrackUUID();
