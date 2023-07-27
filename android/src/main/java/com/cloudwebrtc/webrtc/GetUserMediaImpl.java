@@ -477,7 +477,7 @@ class GetUserMediaImpl {
                         info.fps = DEFAULT_FPS;
                         info.isScreenCapture = true;
                         info.capturer = videoCapturer;
-
+                        ///11123344447747746664664
                         videoCapturer.startCapture(info.width, info.height, info.fps);
                         Log.d(TAG, "OrientationAwareScreenCapturer.startCapture: " + info.width + "x" + info.height + "@" + info.fps);
 
