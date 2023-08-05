@@ -23,32 +23,44 @@ NSArray<RTCDesktopSource*>* _captureSources;
   NSString* trackUUID = [[NSUUID UUID] UUIDString];
 
 #if TARGET_OS_IPHONE
-  BOOL useBroadcastExtension = false;
-  id videoConstraints = constraints[@"video"];
-  if ([videoConstraints isKindOfClass:[NSDictionary class]]) {
-    // constraints.video.deviceId
-    useBroadcastExtension =
-        [((NSDictionary*)videoConstraints)[@"deviceId"] isEqualToString:@"broadcast"];
-  }
 
+    
+    int shareType = 0; // 1 = 屏幕共享 ；2 = 图片共享
+    
+    if (constraints[@"shareImage"]){
+        shareType = 2;
+    }else{
+        id videoConstraints = constraints[@"video"];
+        if ([videoConstraints isKindOfClass:[NSDictionary class]]) {
+          // constraints.video.deviceId
+            if ([((NSDictionary*)videoConstraints)[@"deviceId"] isEqualToString:@"broadcast"]){
+                shareType = 1;
+            }
+        }
+    }
+    
+    
   id screenCapturer;
+    
 
-  if (useBroadcastExtension) {
-    screenCapturer = [[FlutterBroadcastScreenCapturer alloc] initWithDelegate:videoSource];
-  } else {
-    screenCapturer = [[FlutterRPScreenRecorder alloc] initWithDelegate:videoSource];
-  }
+    if (shareType == 1){
+        screenCapturer = [[FlutterBroadcastScreenCapturer alloc] initWithDelegate:videoSource];
+    }else if (shareType == 2){
+        screenCapturer = [[FlutterRTCCustomCaprurer alloc] initWithDelegate:videoSource];
+    }else{
+        screenCapturer = [[FlutterRPScreenRecorder alloc] initWithDelegate:videoSource];
+    }
 
   [screenCapturer startCapture];
-  NSLog(@"start %@ capture", useBroadcastExtension ? @"broadcast" : @"replykit");
+    NSLog(@"start capture shareType = %d  capture", shareType);
 
   self.videoCapturerStopHandlers[trackUUID] = ^(CompletionHandler handler) {
-    NSLog(@"stop %@ capture, trackID %@", useBroadcastExtension ? @"broadcast" : @"replykit",
+    NSLog(@"stop  capture shareType = %d , trackID %@", shareType,
           trackUUID);
     [screenCapturer stopCaptureWithCompletionHandler:handler];
   };
 
-  if (useBroadcastExtension) {
+  if (shareType == 1) {
     NSString* extension =
         [[[NSBundle mainBundle] infoDictionary] valueForKey:kRTCScreenSharingExtension];
     if (extension) {
@@ -62,6 +74,10 @@ NSArray<RTCDesktopSource*>* _captureSources;
       }
     }
   }
+
+
+
+  
 #endif
 
 #if TARGET_OS_OSX
