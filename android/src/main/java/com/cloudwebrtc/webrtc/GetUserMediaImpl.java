@@ -432,16 +432,15 @@ class GetUserMediaImpl {
 
 
         if (videoCapturer == null) {
-
-            resultError(screenRequestPermissions, GetDisplayMediaFailed, User revoked  +
-                    permission to capture the screen., result);
+            resultError("screenRequestPermissions", "GetDisplayMediaFailed, User revoked " +
+                    "permission to capture the screen.", result);
             return;
         }
 
         PeerConnectionFactory pcFactory = stateProvider.getPeerConnectionFactory();
         VideoSource videoSource = pcFactory.createVideoSource(false);
 
-        String threadName = Thread.currentThread().getName() + _texture_screen_thread;
+        String threadName = Thread.currentThread().getName() + "_texture_screen_thread";
         SurfaceTextureHelper surfaceTextureHelper =
                 SurfaceTextureHelper.create(threadName, EglUtils.getRootEglBaseContext());
         videoCapturer.initialize(
@@ -459,7 +458,7 @@ class GetUserMediaImpl {
 
         videoCapturer.startCapture(info.width, info.height, info.fps);
         Log.d(TAG,
-                OrientationAwareScreenCapturer.startCapture  + info.width + x + info.height + @ + info.fps);
+                "OrientationAwareScreenCapturer.startCapture: " + info.width + "x" + info.height + "@" + info.fps);
 
         String trackId = stateProvider.getNextTrackUUID();
         mVideoCapturers.put(trackId, info);
@@ -470,7 +469,7 @@ class GetUserMediaImpl {
         ConstraintsArray videoTracks = new ConstraintsArray();
         ConstraintsMap successResult = new ConstraintsMap();
 
-        for (MediaStreamTrack track  tracks) {
+        for (MediaStreamTrack track : tracks) {
             if (track == null) {
                 continue;
             }
@@ -487,12 +486,12 @@ class GetUserMediaImpl {
             ConstraintsMap track_ = new ConstraintsMap();
             String kind = track.kind();
 
-            track_.putBoolean(enabled, track.enabled());
-            track_.putString(id, id);
-            track_.putString(kind, kind);
-            track_.putString(label, kind);
-            track_.putString(readyState, track.state().toString());
-            track_.putBoolean(remote, false);
+            track_.putBoolean("enabled", track.enabled());
+            track_.putString("id", id);
+            track_.putString("kind", kind);
+            track_.putString("label", kind);
+            track_.putString("readyState", track.state().toString());
+            track_.putBoolean("remote", false);
 
             if (track instanceof AudioTrack) {
                 audioTracks.pushMap(track_);
@@ -503,24 +502,24 @@ class GetUserMediaImpl {
 
         String streamId = mediaStream.getId();
 
-        Log.d(TAG, MediaStream id  + streamId);
+        Log.d(TAG, "MediaStream id: " + streamId);
         stateProvider.putLocalStream(streamId, mediaStream);
-        successResult.putString(streamId, streamId);
-        successResult.putArray(audioTracks, audioTracks.toArrayList());
-        successResult.putArray(videoTracks, videoTracks.toArrayList());
+        successResult.putString("streamId", streamId);
+        successResult.putArray("audioTracks", audioTracks.toArrayList());
+        successResult.putArray("videoTracks", videoTracks.toArrayList());
         result.success(successResult.toMap());
     }
 
     void getDisplayMedia(
             final ConstraintsMap constraints, final Result result, final MediaStream mediaStream) {
 
-                if (constraints.hasKey("shareImage")) {
-                    if (constraints.getBoolean("shareImage")) {
-                        FileShareVideoCapturer shareVideoCapturer = new FileShareVideoCapturer();
-                        setCapturer(shareVideoCapturer, result, mediaStream);
-                        return;
-                    }
-                }
+        if (constraints.hasKey("shareImage")) {
+            if (constraints.getBoolean("shareImage")) {
+                FileShareVideoCapturer shareVideoCapturer = new FileShareVideoCapturer();
+                setCapturer(shareVideoCapturer, result, mediaStream);
+                return;
+            }
+        }
 
 
         screenRequestPermissions(
