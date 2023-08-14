@@ -6,6 +6,8 @@
 #import <ReplayKit/ReplayKit.h>
 #import "FlutterBroadcastScreenCapturer.h"
 #import "FlutterRPScreenRecorder.h"
+
+#import "FlutterRTCCustomCaprurer.h"
 #endif
 
 #if TARGET_OS_OSX
