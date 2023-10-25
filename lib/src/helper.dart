@@ -116,6 +116,18 @@ class Helper {
     return Future.value(true);
   }
 
+  static Future<bool> switchCameraById(
+      MediaStreamTrack track, String cameraId) {
+    if (track.kind != 'video') {
+      throw 'The is not a video track => $track';
+    }
+
+    return WebRTC.invokeMethod(
+      'mediaStreamTrackSwitchCameraById',
+      <String, dynamic>{'trackId': track.id, 'cameraId': cameraId},
+    ).then((value) => value ?? false);
+  }
+
   static Future<void> setVolume(double volume, MediaStreamTrack track) async {
     if (track.kind == 'audio') {
       if (kIsWeb) {

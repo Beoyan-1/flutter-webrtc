@@ -11,6 +11,10 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
 import android.view.Surface;
 
 import org.webrtc.CapturerObserver;
@@ -19,6 +23,10 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
 
 
 public class FileShareVideoCapturer implements VideoCapturer {
@@ -66,7 +74,7 @@ public class FileShareVideoCapturer implements VideoCapturer {
             surTexture.startListening(new VideoSink() {
                 @Override
                 public void onFrame(VideoFrame videoFrame) {
-                    System.out.println("添加帧");
+                    // System.out.println("添加帧");
                     capturerObserver.onFrameCaptured(videoFrame);
                 }
             });
@@ -100,6 +108,10 @@ public class FileShareVideoCapturer implements VideoCapturer {
             if (disposed) {
                 return;
             }
+            if(mWorkerThread!=null){
+                mWorkerThread.exit();
+            }
+
             disposed = true;
             stopCapture();
             surface.release();
@@ -113,6 +125,7 @@ public class FileShareVideoCapturer implements VideoCapturer {
     }
 
     public void pushBitmap(Bitmap bitmap, int rotationDegrees) {
+
         synchronized (stateLock) {
 
             if (disposed) {
@@ -141,12 +154,50 @@ public class FileShareVideoCapturer implements VideoCapturer {
             });
         }
     }
+    private WorkerThread mWorkerThread = new WorkerThread();
+    int index=0;
+    private class WorkerThread extends Thread {
+        protected static final String TAG = "WorkerThread";
+        private Handler mHandler;
+        private Looper mLooper;
+        public WorkerThread() {
+            start();
+        }
+        public void run() {
+            Looper.prepare();
+            mLooper = Looper.myLooper();
+            mHandler = new Handler(mLooper) {
+                @Override
+                public void handleMessage(Message msg) {
+                    tick((byte[]) msg.obj);
 
-   class ShareImageReceiver extends BroadcastReceiver {
+                }
+            };
+            Looper.loop();
+        }
+
+        public void exit() {
+            if (mLooper != null) {
+                mLooper.quit();
+                mLooper = null;
+            }
+        }
+
+        public void executeTask(byte[] data) {
+            Message msg = Message.obtain();
+            msg.obj = data;
+            mHandler.sendMessage(msg);
+        }
+    }
+
+
+
+    class ShareImageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             byte[] data = intent.getByteArrayExtra("data");
-            tick(data);
+            // Bitmap bt= intent.getParcelableExtra("data");
+            mWorkerThread.executeTask(data);
         }
     }
     public Bitmap Bytes2Bimap(byte[] b) {
@@ -157,6 +208,7 @@ public class FileShareVideoCapturer implements VideoCapturer {
         }
     }
     public void tick(byte[] data) {
+
         Bitmap bitmap = Bytes2Bimap(data);
         if (bitmap != null) {
             pushBitmap(bitmap, 0);
@@ -164,4 +216,3 @@ public class FileShareVideoCapturer implements VideoCapturer {
 
     }
 }
-

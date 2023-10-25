@@ -926,6 +926,28 @@ class GetUserMediaImpl {
         resultError("switchCamera", "Switching camera failed: " + id, result);
     }
 
+    void switchCameraById(String trackId,String cameraId, Result result) {
+        VideoCapturer videoCapturer = mVideoCapturers.get(trackId).capturer;
+        if (videoCapturer == null) {
+            resultError("switchCameraById", "Video capturer not found for id: " + trackId, result);
+            return;
+        }
+        CameraVideoCapturer cameraVideoCapturer = (CameraVideoCapturer) videoCapturer;
+        cameraVideoCapturer.switchCamera(
+                new CameraVideoCapturer.CameraSwitchHandler() {
+                    @Override
+                    public void onCameraSwitchDone(boolean b) {
+                        result.success(b);
+                    }
+
+                    @Override
+                    public void onCameraSwitchError(String s) {
+                        resultError("switchCameraById", "Switching camera failed: " + trackId, result);
+                    }
+                }, cameraId);
+
+    }
+
     /**
      * Creates and starts recording of local stream to file
      *
