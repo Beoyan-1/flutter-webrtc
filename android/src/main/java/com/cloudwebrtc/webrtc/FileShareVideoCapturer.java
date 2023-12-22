@@ -1,7 +1,10 @@
 package com.cloudwebrtc.webrtc;
 
 
+import android.app.Activity;
+
 import android.content.BroadcastReceiver;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,11 +13,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
+
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
+
+import android.view.PixelCopy;
 import android.view.Surface;
 
 import org.webrtc.CapturerObserver;
@@ -23,9 +30,8 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Date;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 
@@ -79,11 +85,7 @@ public class FileShareVideoCapturer implements VideoCapturer {
                 }
             });
         }
-
-
     }
-
-
 
     @Override
     public void stopCapture() {
@@ -128,30 +130,33 @@ public class FileShareVideoCapturer implements VideoCapturer {
 
         synchronized (stateLock) {
 
-            if (disposed) {
-                return;
-            }
-            if (this.rotation != rotationDegrees) {
-                surTexture.setFrameRotation(rotationDegrees);
-                this.rotation = rotationDegrees;
-            }
-            if (this.width != bitmap.getWidth() || this.height != bitmap.getHeight()) {
-                surTexture.setTextureSize(bitmap.getWidth(), bitmap.getHeight());
-                this.width = bitmap.getWidth();
-                this.height = bitmap.getHeight();
-            }
-            surTexture.getHandler().post(() -> {
-                Canvas canvas;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    canvas = surface.lockHardwareCanvas();
-                } else {
-                    canvas = surface.lockCanvas(null);
+            try{
+                if (disposed) {
+                    return;
                 }
-                if (canvas != null) {
-                    canvas.drawBitmap(bitmap, new Matrix(), new Paint());
-                    surface.unlockCanvasAndPost(canvas);
+                if (this.rotation != rotationDegrees) {
+                    surTexture.setFrameRotation(rotationDegrees);
+                    this.rotation = rotationDegrees;
                 }
-            });
+                if (this.width != bitmap.getWidth() || this.height != bitmap.getHeight()) {
+                    surTexture.setTextureSize(bitmap.getWidth(), bitmap.getHeight());
+                    this.width = bitmap.getWidth();
+                    this.height = bitmap.getHeight();
+                }
+                surTexture.getHandler().post(() -> {
+                    Canvas canvas;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        canvas = surface.lockHardwareCanvas();
+                    } else {
+                        canvas = surface.lockCanvas(null);
+                    }
+                    if (canvas != null) {
+
+                        canvas.drawBitmap(bitmap, new Matrix(), new Paint());
+                        surface.unlockCanvasAndPost(canvas);
+                    }
+                });
+            }catch (Exception e){}
         }
     }
     private WorkerThread mWorkerThread = new WorkerThread();
@@ -190,16 +195,91 @@ public class FileShareVideoCapturer implements VideoCapturer {
         }
     }
 
-
-
     class ShareImageReceiver extends BroadcastReceiver {
+        Bitmap bitmapTmp = null;
         @Override
         public void onReceive(Context context, Intent intent) {
-            byte[] data = intent.getByteArrayExtra("data");
-            // Bitmap bt= intent.getParcelableExtra("data");
-            mWorkerThread.executeTask(data);
+            Bundle bundle = intent.getExtras();
+            boolean isCaptureBySelf = bundle.getBoolean("isCaptureBySelf");
+            if(isCaptureBySelf){
+                //高版本，直接由webrtc自己截图
+                boolean isCaptrue = bundle.getBoolean("isCaptrue");
+                if(isCaptrue){
+                    int left = bundle.getInt("left");
+                    int right = bundle.getInt("right");
+                    int top = bundle.getInt("top");
+                    int bottom = bundle.getInt("bottom");
+                    int width = bundle.getInt("width");
+                    int height = bundle.getInt("height");
+                    Bitmap screenshotBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    //截图方法
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Rect rect = new Rect(left,top,right,bottom);
+                        try{
+
+                            PixelCopy.request(getActivity().getWindow() , rect,screenshotBitmap, new PixelCopy.OnPixelCopyFinishedListener() {
+                                @Override
+                                public void onPixelCopyFinished(int copyResult) {
+
+                                }
+                            }, new Handler(Looper.getMainLooper()));
+                            bitmapTmp = screenshotBitmap.copy(Bitmap.Config.ARGB_8888,true);
+                            pushBitmap(screenshotBitmap,0);
+                        }catch (Exception e){
+
+                        }
+
+                    }
+                }else{
+                    pushBitmap(bitmapTmp,0);
+                }
+            }else {
+                //低版本，获取由webview拿到的截图
+                byte[] data = bundle.getByteArray("data");
+                mWorkerThread.executeTask(data);
+            }
         }
     }
+
+
+
+    public static Activity getActivity() {
+        Class activityThreadClass = null;
+        try {
+            activityThreadClass = Class.forName("android.app.ActivityThread");
+            Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
+            Field activitiesField = activityThreadClass.getDeclaredField("mActivities");
+            activitiesField.setAccessible(true);
+            Map activities = (Map) activitiesField.get(activityThread);
+
+            for (Object activityRecord : activities.values()) {
+
+                Class activityRecordClass = activityRecord.getClass();
+
+                Field pausedField = activityRecordClass.getDeclaredField("paused");
+                pausedField.setAccessible(true);
+                if (!pausedField.getBoolean(activityRecord)) {
+                    Field activityField = activityRecordClass.getDeclaredField("activity");
+                    activityField.setAccessible(true);
+                    Activity activity = (Activity) activityField.get(activityRecord);
+                    return activity;
+                }
+
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public Bitmap Bytes2Bimap(byte[] b) {
         if (b.length != 0) {
             return BitmapFactory.decodeByteArray(b, 0, b.length);
@@ -207,12 +287,14 @@ public class FileShareVideoCapturer implements VideoCapturer {
             return null;
         }
     }
+
     public void tick(byte[] data) {
 
         Bitmap bitmap = Bytes2Bimap(data);
         if (bitmap != null) {
-            pushBitmap(bitmap, 0);
+            pushBitmap(bitmap,0);
         }
 
     }
 }
+
