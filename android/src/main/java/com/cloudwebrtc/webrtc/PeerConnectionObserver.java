@@ -401,6 +401,8 @@ class PeerConnectionObserver implements PeerConnection.Observer, EventChannel.St
       trackInfo.putString("readyState", track.state().toString());
       trackInfo.putBoolean("remote", true);
       audioTracks.pushMap(trackInfo);
+        if(AudioSwitchManager.instance.isPhone())
+            mute(false);
     }
     params.putArray("audioTracks", audioTracks.toArrayList());
     params.putArray("videoTracks", videoTracks.toArrayList());
@@ -1165,5 +1167,11 @@ private RtpParameters updateRtpParameters(RtpParameters parameters, Map<String, 
   
       return uuid;
     }
-  
+    public void mute(boolean isMute){
+        for (String key : remoteTracks.keySet()) {
+            if(remoteTracks.get(key).kind().equals("audio")){
+                remoteTracks.get(key).setEnabled(isMute);
+            }
+        }
+    }
 }

@@ -31,6 +31,7 @@ public class AudioSwitchManager {
 
     public boolean loggingEnabled;
     private boolean isActive = false;
+    private boolean isEnableSpeakerphone = false;
     @NonNull
     public Function2<
             ? super List<? extends AudioDevice>,
@@ -58,6 +59,7 @@ public class AudioSwitchManager {
         preferredDeviceList.add(AudioDevice.WiredHeadset.class);
         preferredDeviceList.add(AudioDevice.Speakerphone.class);
         preferredDeviceList.add(AudioDevice.Earpiece.class);
+        isEnableSpeakerphone = audioManager.isMicrophoneMute();
         initAudioSwitch();
     }
 
@@ -131,12 +133,38 @@ public class AudioSwitchManager {
     }
 
     public void enableSpeakerphone(boolean enable) {
-        audioManager.setSpeakerphoneOn(enable);
+        if(enable){
+            audioManager.setSpeakerphoneOn(true);
+            selectAudioOutput(AudioDeviceKind.fromTypeName("speaker"));
+        }else{
+            audioManager.setSpeakerphoneOn(false);
+            selectAudioOutput(AudioDeviceKind.fromTypeName("earpiece"));
+        }
+        isEnableSpeakerphone = enable;
+    }
+    public boolean isEnableSpeakerphone() {
+        return isEnableSpeakerphone;
     }
     
     public void selectAudioOutput(@Nullable AudioDeviceKind kind) {
         if (kind != null) {
             selectAudioOutput(kind.audioDeviceClass);
         }
+    }
+
+    public boolean isPhone(){
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            TelephonyManager telephonyManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+            int callState = telephonyManager.getCallState();
+            // 判断当前通话状态
+            if (callState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                // 设备当前没有处于通话状态
+                return true;
+            } else  {
+                // 设备当前处于通话状态
+                return false;
+            }
+        }
+        return false;
     }
 }
