@@ -4,8 +4,12 @@ import static com.cloudwebrtc.webrtc.utils.MediaConstraintsUtils.parseMediaConst
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
+import android.content.BroadcastReceiver;
+import android.telephony.TelephonyManager;
+import android.content.Intent;
+
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;

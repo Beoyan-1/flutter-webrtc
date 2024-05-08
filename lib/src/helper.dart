@@ -39,6 +39,14 @@ class Helper {
         .selectAudioOutput(AudioOutputOptions(deviceId: deviceId));
   }
 
+  static Future<String> selectedAudioOutput() async {
+    print('miki  WebRTC.invokeMethod(selectedAudioOutput)');
+    String device = await WebRTC.invokeMethod(
+      'selectedAudioOutput',
+    );
+    return device;
+  }
+
   /// Set audio input device for Flutter native
   /// Note: The usual practice in flutter web is to use deviceId as the
   /// `getUserMedia` parameter to get a new audio track and replace it with the

@@ -10,6 +10,11 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.telephony.TelephonyManager;
+import android.content.pm.PackageManager;
+import android.Manifest;
+import androidx.core.content.ContextCompat;
+
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 
