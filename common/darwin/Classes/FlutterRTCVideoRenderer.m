@@ -180,6 +180,7 @@
 
 #pragma mark - RTCVideoRenderer methods
 - (void)renderFrame:(RTCVideoFrame*)frame {
+    
   [self copyI420ToCVPixelBuffer:_pixelBufferRef withFrame:frame];
 
   __weak FlutterRTCVideoRenderer* weakSelf = self;
@@ -263,10 +264,13 @@
 
 - (FlutterRTCVideoRenderer*)createWithTextureRegistry:(id<FlutterTextureRegistry>)registry
                                             messenger:(NSObject<FlutterBinaryMessenger>*)messenger {
+    
+
   return [[FlutterRTCVideoRenderer alloc] initWithTextureRegistry:registry messenger:messenger];
 }
 
 - (void)rendererSetSrcObject:(FlutterRTCVideoRenderer*)renderer stream:(RTCVideoTrack*)videoTrack {
   renderer.videoTrack = videoTrack;
 }
+
 @end

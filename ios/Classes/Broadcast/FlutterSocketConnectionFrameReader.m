@@ -241,6 +241,7 @@ const NSUInteger kMaxReadLength = 10 * 1024;
       NSLog(@"server stream open completed");
       break;
     case NSStreamEventHasBytesAvailable:
+          NSLog(@"NSStreamEventHasBytesAvailable 123");
       [self readBytesFromStream:(NSInputStream*)aStream];
       break;
     case NSStreamEventEndEncountered:

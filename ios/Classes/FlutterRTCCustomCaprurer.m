@@ -12,15 +12,18 @@
 
 @interface FlutterRTCCustomCaprurer ()
 
+@property (nonatomic, assign) mach_timebase_info_data_t timebaseInfo;
+
+@property (nonatomic, assign) int64_t startTimeStampNs;
+
+
+@property (nonatomic, strong) RTCCVPixelBuffer * pixelBuffer;
+
+@property (nonatomic, strong) RTCVideoSource * source;
+
 @end
 
-@implementation FlutterRTCCustomCaprurer{
-//    NSString * _path;
-    mach_timebase_info_data_t _timebaseInfo;
-    int64_t _startTimeStampNs;
-    
-    RTCVideoSource* _source;
-}
+@implementation FlutterRTCCustomCaprurer
 
 
 - (instancetype)initWithDelegate:(__weak id<RTCVideoCapturerDelegate>)delegate{
@@ -29,7 +32,7 @@
     if (self) {
         mach_timebase_info(&_timebaseInfo);
 //        _path = path;
-        _source = delegate;
+        self.source = delegate;
     }
     
     return self;
@@ -57,38 +60,50 @@
 }
 
 - (void)inAppWebViewScreenCaptureAticon:(NSNotification *)nfc{
-//    NSLog(@"接收到截屏通知 %f",[[NSDate date] timeIntervalSince1970]);
-    if (nfc.object && [nfc.object isKindOfClass:[UIImage class]]){
-        UIImage * image = (UIImage *)nfc.object;
-        //3.图片转成buffer
-        CVPixelBufferRef newBuffer = [self imageToRGBPixelBuffer:image];
-
-        RTCCVPixelBuffer* rtcPixelBuffer = [[RTCCVPixelBuffer alloc] initWithPixelBuffer:newBuffer];
-
-        CVPixelBufferRelease(newBuffer);
-
-        //生成videoFrame
-
-        int64_t currentTime = mach_absolute_time();
-        int64_t currentTimeStampNs = currentTime * _timebaseInfo.numer / _timebaseInfo.denom;
-
-        if (_startTimeStampNs < 0) {
-          _startTimeStampNs = currentTimeStampNs;
-        }
-
-        int64_t frameTimeStampNs = currentTimeStampNs - _startTimeStampNs;
-
-    //    NSLog(@"当前时间戳 = %lld",frameTimeStampNs);
-        
-        RTC_OBJC_TYPE(RTCVideoFrame) * videoFrame =
-            [[RTCVideoFrame alloc] initWithBuffer:rtcPixelBuffer rotation:RTCVideoRotation_0 timeStampNs:frameTimeStampNs];
-
-        if (self.delegate && [self.delegate respondsToSelector:@selector(capturer:didCaptureVideoFrame:)]){
-            [self.delegate capturer:self didCaptureVideoFrame:videoFrame];
-        }
-//        NSLog(@"发送给编码器 %f",[[NSDate date] timeIntervalSince1970]);
-    }
     
+    __weak __typeof(self)wself = self;
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+//        NSLog(@"接到通知 ......");
+        
+        
+        
+        if (nfc.object && [nfc.object isKindOfClass:[UIImage class]]){
+//            NSLog(@"开始转换 ......");
+            UIImage * image = (UIImage *)nfc.object;
+            
+            CVPixelBufferRef newBuffer = [self imageToRGBPixelBuffer:image];
+
+            wself.pixelBuffer = [[RTCCVPixelBuffer alloc] initWithPixelBuffer:newBuffer];
+
+            CVPixelBufferRelease(newBuffer);
+//            NSLog(@" 结束转换 ......");
+//            NSLog(@"使用新的 videoFrame");
+        }else{
+//            NSLog(@"使用缓存的 videoFrame");
+        }
+        
+        
+        if (wself.pixelBuffer && wself.delegate && [wself.delegate respondsToSelector:@selector(capturer:didCaptureVideoFrame:)]){
+            int64_t currentTime = mach_absolute_time();
+            int64_t currentTimeStampNs = currentTime * wself.timebaseInfo.numer / wself.timebaseInfo.denom;
+
+            if (wself.startTimeStampNs < 0) {
+                wself.startTimeStampNs = currentTimeStampNs;
+            }
+
+            int64_t frameTimeStampNs = currentTimeStampNs - wself.startTimeStampNs;
+
+        //    NSLog(@"当前时间戳 = %lld",frameTimeStampNs);
+            
+            RTC_OBJC_TYPE(RTCVideoFrame) * videoFrame =
+                [[RTCVideoFrame alloc] initWithBuffer:wself.pixelBuffer rotation:RTCVideoRotation_0 timeStampNs:frameTimeStampNs];
+            
+
+            [wself.delegate capturer:wself didCaptureVideoFrame:videoFrame];
+                
+        }
+    });
 }
 
 
@@ -127,5 +142,6 @@
 
     return pxbuffer;
 }
+
 
 @end

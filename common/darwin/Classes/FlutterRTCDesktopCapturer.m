@@ -42,7 +42,7 @@ NSArray<RTCDesktopSource*>* _captureSources;
     }
     
     
-  id screenCapturer;
+    id screenCapturer;
     
 
     if (shareType == 1){
