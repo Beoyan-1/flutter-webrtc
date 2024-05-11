@@ -1,6 +1,189 @@
 # Changelog
 
 --------------------------------------------
+[0.10.4] - 2024-05-06
+
+* [iOS/macOS] chore: update swift webrtc sdks to 114.5735.10 (#1576)
+* [Android] fix: actually call selectAudioOutput in enableSpeakerButPreferBluetooth
+* [iOS] fix: remember speakerphone mode for ensureAudioSession (#1568)
+* [Windows/Linux] Fix handling of unimplemented method (#1563)
+
+[0.10.3] - 2024-04-09
+
+* [iOS/macOS] Fix compilation warning for iOS/macOS.
+
+[0.10.2] - 2024-04-08
+
+* [Native/Web] feat: add keyRingSize/discardFrameWhenCryptorNotReady to KeyProviderOptions.
+
+[0.10.1] - 2024-04-08
+
+* [Web] fix renderer issue for web.
+
+[0.10.0] - 2024-04-08
+
+* [Web] move to package:web.
+
+[0.9.48+hotfix.1] - 2024-02-05
+
+* [Android] bump version for libwebrtc.
+
+[0.9.48] - 2024-02-05
+
+* [Android] bump version for libwebrtc.
+* [iOS] Supports ensureAudioSsession method for iOS only. (#1514)
+* [Android] fix android wrong display size. (#1508).
+
+[0.9.47] - 2023-11-29
+
+* [Windows/Linux] fix: Check the invalid value of candidate and session description. (#1484)
+* [Windows/Linux/macOS] fix: screen sharing issue for desktop.
+* [Web] fix: platformViewRegistry getter is deprecated (#1485)
+* [Dart] Throw exception for set src object (#1491).
+
+[0.9.46] - 2023-10-25
+
+* [iOS/macOS] fix: Crop video output size to target settings. (#1472)
+* [Android] fix: Fix bluetooth sco not stopping after room disconnect (#1475)
+
+[0.9.45] - 2023-09-27
+
+* [iOS/macOS] fix: send message on non-platform thread.
+* [Windows] fix: fix setSrcObj with trackId for Windows.
+* [Windows] fix: fix "unlock of unowned mutex" error when call "captureFrame()" func on windows.
+
+[0.9.44] - 2023-09-25
+
+* [Windows] fix: fix Renderer bug for Windows.
+* [Native] fix: Use independent threads to process frame encryption/decryption
+* [Native] fix: Correct handle SIF frame
+* [Native] fix: Fix a fault tolerance judgment failure
+
+[0.9.43] - 2023-09-20
+
+* [Native] fix: send frame cryptor events from signaling thread.
+* [Native] fix: h264 freeze when using E2EE.
+
+[0.9.42+hotfix.1] - 2023-09-15
+
+* [Windows/Linux] fix: fix cannot start vp8/h264 encoder correctly.
+
+[0.9.42] - 2023-09-15
+
+* [Dart/Native] feat: add more framcryptor api (#1444)
+* [Dart/Native] feat: support scalability mode (#1442)
+* [Android] fix: Turn off audio routing in non communication modes (#1438)
+
+* [Android] feat: Add more control over android audio options.
+
+[0.9.41] - 2023-08-30
+
+* [Android] feat: Add more control over android audio options.
+
+[0.9.40] - 2023-08-16
+
+* [Windows/Linux] fix: nullptr checking for sender/receiver for getStats.
+
+[0.9.39] - 2023-08-14
+
+* [Dart/Native] feat: add async methods for getting pc states.
+
+[0.9.38] - 2023-08-11
+
+* [Android] fix: Expose helper to clearCommunicationDevice on AudioManager.AUDIOFOCUS_LOSS
+* [Android] feat: support force SW codec list for android, and disable HW codec for VP9 by default.
+* [Android] fix: issue for audio device switch (#1417)
+* [Android/iOS] feat: Added setZoom method to support camera zooming while streaming. (#1412).
+
+[0.9.37] - 2023-08-07
+
+* [Native] fix: Skip set_sdp_fmtp_line if sdpFmtpLine is empty.
+* [Android] fix: fix android earpiece not being replaced after wired headset is disconnected.
+* [Dart] fix: partially rebuild RTCVideoView when renderVideo value changes.
+* [Android] feat: expose android audio modes.
+* [Android] feat: support forceSWCodec for Android.
+* [Linux] fix: add $ORIGIN to rpath.
+
+[0.9.36] - 2023-07-13
+
+* [Native] upgrade libwebrtc to m114.5735.02.
+* [Windows/Linux] Add implementation to MediaStreamTrack.captureFrame() for linux/windows.
+* [Darwin/Android] Support to ignore network adapters used for ICE on Android, iOS and macOS.
+
+[0.9.35] - 2023-06-30
+
+* [iOS] feat: expose audio mode for ios.
+* [Darwin] fix: compiler warning for Darwin.
+* [Dart] Fix setMicrophoneMute() not awaitable.
+* [Native] Update libwebrtc to m114.
+* [Dart/Web] Separate frame cryptor to dart-webrtc.
+
+[0.9.34] - 2023-06-14
+
+* [Web] fix facingMode for flutter web mobile.
+
+[0.9.33] - 2023-06-08
+
+* [Android] fix frame drops for android.
+
+[0.9.32] - 2023-05-30
+
+* [Android] fix issue for get user audio.
+* [Android] fix getStats throw LinkedHasMap exception.
+
+[0.9.31] - 2023-05-23
+
+* [Darwin] Improve iOS/macOS H264 encoder (Upgrade to WebRTC-SDK M104.5112.17).
+
+[0.9.30+hotfix.2] - 2023-05-18
+
+* [Windows/Linux] fix bug for eventchannel proxy.
+* [Windows/Linux] fix: crash for pc.close/dispose on win/linux. (#1360)
+
+[0.9.30+hotfix.1] - 2023-05-17
+
+* [Windows/Linux] Fix compiler error.
+
+[0.9.30] - 2023-05-16
+
+* [Darwin] Handle exceptions for frame rate settings for darinw. (#1351)
+* [Android] Fix bluetooth device enumerate. (#1349)
+* [Darwin/Android/Windows/Linux] Added maxIPv6Networks configuration (#1350)
+* [iOS] Fix: broadcast extension not found fallback logic (#1347)
+* [Android] Move the call of capturer.stopCapture() outside the main thread to avoid blocking of flutter method call.
+* [Windows/Linux] Fix the crash issue of video room (#1343)
+
+[0.9.29+hotfix.1] - 2023-05-08
+
+* [Android] fix: application context null when app is terminated.
+* [Android/iOS] feat: add way to enable speaker but prefer bluetooth.
+
+[0.9.28] - 2023-05-08
+
+* [Windows/Linux] fix: use the correct transceiver id.
+* [Windows/Linux] fix: Support restart camera for Windows/Linux.
+
+[0.9.27] - 2023-04-27
+
+* [Darwin/Android/Windows/Linux] feat: framecryptor.
+* [Windows/Linux] Fix the type/code mistake.
+* [Windows/Linux] Fix uneffective RTPTransceiver::GetCurrentDirection.
+* [Windows/Linux] RTPtransceiver::getCurrentDirection returns correct value.
+
+[0.9.26] - 2023-04-16
+
+* [iOS/macOS] motify h264 profile-level-id to support high resolution.
+* [Dawrin/Android/Windows] feat: add RTCDegradationPreference to RTCRtpParameters.
+
+[0.9.25] - 2023-04-10
+
+* [Dawrin/Android/Windows] Add  `addStreams` to `RTCRtpSender`
+* [Android] fix: label for Wired Headset. (#1305)
+* [Dawrin/Android/Windows] Feat/media stream track get settings (#1294)
+* [Android/iOS] Fix track lookup in the platform specific code for Android and iOS (#1289)
+* [iOS] fix: ICE Connectivity doesn't establish with DualSIM iPhones.
+* [Android] Switch to webrtc hosted on maven central (#1288)
+
 [0.9.24] - 2023-03-07
 
 * [iOS] avaudiosession mode changed to AVAudioSessionModeVideoChat (#1285)

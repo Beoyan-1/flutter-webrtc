@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_webrtc_haoxin'
-  s.version          = '0.9.46'
+  s.version          = '0.10.4'
   s.summary          = 'Flutter WebRTC plugin for iOS.'
   s.description      = <<-DESC
 A new flutter plugin project.
@@ -16,7 +16,7 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   # s.dependency 'WebRTC-SDK', '104.5112.09'
-  s.dependency 'WebRTC-SDK', '114.5735.02'
+  s.dependency 'WebRTC-SDK', '114.5735.10'
   
   # s.dependency 'WebRTC_HX'
   s.dependency 'GPUImage'

@@ -47,13 +47,85 @@ class RTCPeerConnectionNative extends RTCPeerConnection {
   RTCSignalingState? get signalingState => _signalingState;
 
   @override
+  Future<RTCSignalingState?> getSignalingState() async {
+    try {
+      final response =
+          await WebRTC.invokeMethod('getSignalingState', <String, dynamic>{
+        'peerConnectionId': _peerConnectionId,
+      });
+
+      if (null == response) {
+        return null;
+      }
+      _signalingState = signalingStateForString(response['state']);
+      return _signalingState;
+    } on PlatformException catch (e) {
+      throw 'Unable to RTCPeerConnection::getSignalingState: ${e.message}';
+    }
+  }
+
+  @override
   RTCIceGatheringState? get iceGatheringState => _iceGatheringState;
+
+  @override
+  Future<RTCIceGatheringState?> getIceGatheringState() async {
+    try {
+      final response =
+          await WebRTC.invokeMethod('getIceGatheringState', <String, dynamic>{
+        'peerConnectionId': _peerConnectionId,
+      });
+
+      if (null == response) {
+        return null;
+      }
+      _iceGatheringState = iceGatheringStateforString(response['state']);
+      return _iceGatheringState;
+    } on PlatformException catch (e) {
+      throw 'Unable to RTCPeerConnection::getIceGatheringState: ${e.message}';
+    }
+  }
 
   @override
   RTCIceConnectionState? get iceConnectionState => _iceConnectionState;
 
   @override
+  Future<RTCIceConnectionState?> getIceConnectionState() async {
+    try {
+      final response =
+          await WebRTC.invokeMethod('getIceConnectionState', <String, dynamic>{
+        'peerConnectionId': _peerConnectionId,
+      });
+
+      if (null == response) {
+        return null;
+      }
+      _iceConnectionState = iceConnectionStateForString(response['state']);
+      return _iceConnectionState;
+    } on PlatformException catch (e) {
+      throw 'Unable to RTCPeerConnection::getIceConnectionState: ${e.message}';
+    }
+  }
+
+  @override
   RTCPeerConnectionState? get connectionState => _connectionState;
+
+  @override
+  Future<RTCPeerConnectionState?> getConnectionState() async {
+    try {
+      final response =
+          await WebRTC.invokeMethod('getConnectionState', <String, dynamic>{
+        'peerConnectionId': _peerConnectionId,
+      });
+
+      if (null == response) {
+        return null;
+      }
+      _connectionState = peerConnectionStateForString(response['state']);
+      return _connectionState;
+    } on PlatformException catch (e) {
+      throw 'Unable to RTCPeerConnection::getConnectionState: ${e.message}';
+    }
+  }
 
   Future<RTCSessionDescription?> get localDescription => getLocalDescription();
 
@@ -118,7 +190,12 @@ class RTCPeerConnectionNative extends RTCPeerConnection {
         Map<dynamic, dynamic> track = map['track'];
 
         var newTrack = MediaStreamTrackNative(
-            track['id'], track['label'], track['kind'], track['enabled']);
+            track['id'],
+            track['label'],
+            track['kind'],
+            track['enabled'],
+            _peerConnectionId,
+            track['settings'] ?? {});
         String kind = track['kind'];
 
         var stream =
@@ -177,7 +254,8 @@ class RTCPeerConnectionNative extends RTCPeerConnection {
             receiver: RTCRtpReceiverNative.fromMap(map['receiver'],
                 peerConnectionId: _peerConnectionId),
             streams: streams,
-            track: MediaStreamTrackNative.fromMap(map['track']),
+            track:
+                MediaStreamTrackNative.fromMap(map['track'], _peerConnectionId),
             transceiver: transceiver));
         break;
 
