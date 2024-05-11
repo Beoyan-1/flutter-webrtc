@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:flutter_webrtc_haoxin/src/native/mediadevices_impl.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import '../desktop_capturer.dart';

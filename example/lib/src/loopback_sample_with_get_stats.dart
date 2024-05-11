@@ -1,7 +1,7 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter_webrtc_haoxin/flutter_webrtc_haoxin.dart';
 
 class LoopBackSampleWithGetStats extends StatefulWidget {
   static String tag = 'loopback_sample_with_get_stats';
