@@ -5,12 +5,13 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc_haoxin/flutter_webrtc_haoxin.dart';
+import 'package:flutter_webrtc_example/src/capture_frame_sample.dart';
 
+import 'src/device_enumeration_sample.dart';
 import 'src/get_display_media_sample.dart';
 import 'src/get_user_media_sample.dart'
     if (dart.library.html) 'src/get_user_media_sample_web.dart';
 import 'src/loopback_data_channel_sample.dart';
-import 'src/loopback_sample.dart';
 import 'src/loopback_sample_unified_tracks.dart';
 import 'src/route_item.dart';
 
@@ -19,7 +20,7 @@ void main() {
   if (WebRTC.platformIsDesktop) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   } else if (WebRTC.platformIsAndroid) {
-    startForegroundService();
+    //startForegroundService();
   }
   runApp(MyApp());
 }
@@ -91,6 +92,15 @@ class _MyAppState extends State<MyApp> {
                     builder: (BuildContext context) => GetUserMediaSample()));
           }),
       RouteItem(
+          title: 'Device Enumeration',
+          push: (BuildContext context) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) =>
+                        DeviceEnumerationSample()));
+          }),
+      RouteItem(
           title: 'GetDisplayMedia',
           push: (BuildContext context) {
             Navigator.push(
@@ -98,14 +108,6 @@ class _MyAppState extends State<MyApp> {
                 MaterialPageRoute(
                     builder: (BuildContext context) =>
                         GetDisplayMediaSample()));
-          }),
-      RouteItem(
-          title: 'LoopBack Sample',
-          push: (BuildContext context) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => LoopBackSample()));
           }),
       RouteItem(
           title: 'LoopBack Sample (Unified Tracks)',
@@ -124,6 +126,14 @@ class _MyAppState extends State<MyApp> {
                 MaterialPageRoute(
                     builder: (BuildContext context) =>
                         DataChannelLoopBackSample()));
+          }),
+      RouteItem(
+          title: 'Capture Frame',
+          push: (BuildContext context) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => CaptureFrameSample()));
           }),
     ];
   }

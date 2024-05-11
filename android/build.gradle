@@ -26,6 +26,9 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
+    if (project.android.hasProperty("namespace")) {
+        namespace 'com.cloudwebrtc.webrtc'
+    }
     compileSdkVersion 31
 
     defaultConfig {
@@ -55,8 +58,8 @@ android {
 }
 
 dependencies {
-    implementation 'io.github.webrtc-sdk:android:114.5735.02'
-    implementation 'com.github.davidliu:audioswitch:c498d866c57f1d88056d5e7e7a78d622e3b0c046'
+    implementation 'io.github.webrtc-sdk:android:114.5735.10'
+    implementation 'com.github.davidliu:audioswitch:89582c47c9a04c62f90aa5e57251af4800a62c9a'
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

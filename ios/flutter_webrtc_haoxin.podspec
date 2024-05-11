@@ -16,7 +16,7 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   # s.dependency 'WebRTC-SDK', '104.5112.09'
-  s.dependency 'WebRTC-SDK', '114.5735.02'
+  s.dependency 'WebRTC-SDK', '114.5735.10'
   
   # s.dependency 'WebRTC_HX'
   s.dependency 'GPUImage'

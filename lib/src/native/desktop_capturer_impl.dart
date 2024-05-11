@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_webrtc_haoxin/src/native/event_channel.dart';
 
 import '../desktop_capturer.dart';
+import 'event_channel.dart';
 import 'utils.dart';
 
 class DesktopCapturerSourceNative extends DesktopCapturerSource {
@@ -108,10 +109,9 @@ class DesktopCapturerNative extends DesktopCapturer {
         }
         break;
       case 'desktopSourceRemoved':
-        final source = _sources[map['id'] as String];
-        if (source != null) {
-          _sources.remove((source) => source.id == map['id']);
-          _onRemoved.add(source);
+        final id = map['id'] as String;
+        if (_sources[id] != null) {
+          _onRemoved.add(_sources.remove(id)!);
         }
         break;
       case 'desktopSourceThumbnailChanged':

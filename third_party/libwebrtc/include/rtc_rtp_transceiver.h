@@ -13,8 +13,7 @@ namespace libwebrtc {
 class RTCRtpTransceiverInit : public RefCountInterface {
  public:
   LIB_WEBRTC_API static scoped_refptr<RTCRtpTransceiverInit> Create(
-      RTCRtpTransceiverDirection direction,
-      const vector<string> stream_ids,
+      RTCRtpTransceiverDirection direction, const vector<string> stream_ids,
       const vector<scoped_refptr<RTCRtpEncodingParameters>> encodings);
 
   virtual RTCRtpTransceiverDirection direction() = 0;
@@ -58,6 +57,8 @@ class RTCRtpTransceiver : public RefCountInterface {
 
   virtual void SetCodecPreferences(
       vector<scoped_refptr<RTCRtpCodecCapability>> codecs) = 0;
+
+  virtual const string transceiver_id() const = 0;
 };
 
 }  // namespace libwebrtc
