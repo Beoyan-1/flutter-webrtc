@@ -1,4 +1,4 @@
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter_webrtc_haoxin/flutter_webrtc_haoxin.dart';
 import 'package:sdp_transform/sdp_transform.dart' as sdp_transform;
 
 void setPreferredCodec(RTCSessionDescription description,
