@@ -3,7 +3,7 @@ description: Flutter WebRTC plugin for iOS/Android/Destkop/Web, based on GoogleW
 # 41 = 调试 m114.5735.02  dart_webrtc: 1.0.15 -> dart_webrtc: 1.1.0 ; webrtc_interface: 1.0.11->webrtc_interface: 1.1.0
 
 # 43/44 =  dart_webrtc: 1.0.15  webrtc_interface: 1.0.11  固定版本，否则报错
-version: 0.9.45
+version: 0.9.46
 homepage: https://github.com/cloudwebrtc/flutter-webrtc
 environment:
   sdk: '>=2.12.0 <3.0.0'
