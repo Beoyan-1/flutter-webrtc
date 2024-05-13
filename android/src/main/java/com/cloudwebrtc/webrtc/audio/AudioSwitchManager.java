@@ -14,6 +14,8 @@ import androidx.annotation.Nullable;
 import android.telephony.TelephonyManager;
 import android.content.pm.PackageManager;
 import android.Manifest;
+import android.util.Log;
+
 import androidx.core.content.ContextCompat;
 
 import com.twilio.audioswitch.AudioDevice;
@@ -233,32 +235,47 @@ public class AudioSwitchManager {
     }
 
     public void enableSpeakerphone(boolean enable) {
-        updatePreferredDeviceList(enable);
-        if (enable) {
-            selectAudioOutput(AudioDevice.Speakerphone.class);
-        } else {
-            List<AudioDevice> devices = availableAudioDevices();
-            AudioDevice audioDevice = null;
-            for (AudioDevice device : devices) {
-                if (device.getClass().equals(AudioDevice.BluetoothHeadset.class)) {
-                    audioDevice = device;
-                    break;
-                } else if (device.getClass().equals(AudioDevice.WiredHeadset.class)) {
-                    audioDevice = device;
-                    break;
-                } else if (device.getClass().equals(AudioDevice.Earpiece.class)) {
-                    audioDevice = device;
-                    break;
-                }
-            }
-            if (audioDevice != null) {
-                selectAudioOutput(audioDevice.getClass());
-            } else {
-                handler.post(() -> {
-                    Objects.requireNonNull(audioSwitch).selectDevice(null);
-                });
-            }
+//        updatePreferredDeviceList(enable);
+//        if (enable) {
+//            selectAudioOutput(AudioDevice.Speakerphone.class);
+//        } else {
+//            List<AudioDevice> devices = availableAudioDevices();
+//            AudioDevice audioDevice = null;
+//            for (AudioDevice device : devices) {
+//                if (device.getClass().equals(AudioDevice.BluetoothHeadset.class)) {
+//                    audioDevice = device;
+//                    break;
+//                } else if (device.getClass().equals(AudioDevice.WiredHeadset.class)) {
+//                    audioDevice = device;
+//                    break;
+//                } else if (device.getClass().equals(AudioDevice.Earpiece.class)) {
+//                    audioDevice = device;
+//                    break;
+//                }
+//            }
+//            if (audioDevice != null) {
+//                Log.e("miki","android selectAudioOutput="+audioDevice.getName());
+//                selectAudioOutput(audioDevice.getClass());
+//            } else {
+//                handler.post(() -> {
+//                    Objects.requireNonNull(audioSwitch).selectDevice(null);
+//                });
+//            }
+//        }
+//        isEnableSpeakerphone = enable;
+        if(enable){
+            audioManager.setSpeakerphoneOn(true);
+            Log.e("miki","--------------------------1");
+            selectAudioOutput(AudioDeviceKind.fromTypeName("speaker"));
+        }else{
+            audioManager.setSpeakerphoneOn(false);
+            Log.e("miki","-------------------------2");
+            selectAudioOutput(AudioDeviceKind.fromTypeName("earpiece"));
         }
+        isEnableSpeakerphone = enable;
+    }
+    public boolean isEnableSpeakerphone() {
+        return isEnableSpeakerphone;
     }
 
     public void enableSpeakerButPreferBluetooth() {

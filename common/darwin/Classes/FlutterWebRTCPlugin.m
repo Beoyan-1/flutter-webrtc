@@ -11,6 +11,7 @@
 #import <WebRTC/RTCFieldTrials.h>
 #import <WebRTC/WebRTC.h>
 
+#import "FlutterRTCBeautyideoCapturer.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wprotocol"
@@ -242,7 +243,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     
   if (self.eventSink &&
       (routeChangeReason == AVAudioSessionRouteChangeReasonNewDeviceAvailable ||
-       routeChangeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable)) {
+       routeChangeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable || isSend)) {
     postEvent(self.eventSink, @{@"event" : @"onDeviceChange"});
   }
 #endif
@@ -895,12 +896,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     [AudioUtils setSpeakerphoneOnButPreferBluetooth];
     result(nil);
   }
-  else if([@"setAppleAudioConfiguration" isEqualToString:call.method]) {
-    NSDictionary* argsMap = call.arguments;
-    NSDictionary* configuration = argsMap[@"configuration"];
-    [AudioUtils setAppleAudioConfiguration:configuration];
-    result(nil);
-  }
+//  else if([@"setAppleAudioConfiguration" isEqualToString:call.method]) {
+//    NSDictionary* argsMap = call.arguments;
+//    NSDictionary* configuration = argsMap[@"configuration"];
+//    [AudioUtils setAppleAudioConfiguration:configuration];
+//    result(nil);
+//  }
 #endif
   else if ([@"getLocalDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
@@ -1322,39 +1323,7 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
     RTCPeerConnection* peerConnection = self.peerConnections[peerConnectionId];
     if (peerConnection) {
       result(@{@"state" : [self stringForSignalingState:peerConnection.signalingState]});
-    } else if ([@"setFilter" isEqualToString:call.method]) {
-      //控制美颜
-      NSDictionary* argsMap = call.arguments;
-       if ([argsMap.allKeys containsObject:@"isEnable"]){
-           NSString * str = argsMap[@"isEnable"];
-           
-           if ([self.videoCapturer isKindOfClass:[FlutterRTCBeautyideoCapturer class]]){
-               FlutterRTCBeautyideoCapturer * temp = (FlutterRTCBeautyideoCapturer *)self.videoCapturer;
-               temp.isBeauty = [str isEqualToString:@"1"];
-           }
-       }
-       result(nil);
-  } else if ([@"selectedAudioOutput" isEqualToString:call.method]) {
-      //已选择的音频输出
-      AVAudioSession* session = [AVAudioSession sharedInstance];
-        
-      AVAudioSessionRouteDescription *currentRoute = [session currentRoute];
-      
-     
-      
-      
-      NSString * audioName = @"";
-      if (currentRoute.outputs.count > 0){
-          audioName = currentRoute.outputs.firstObject.portType;
-      }
-      NSLog(@"已选择的音频输出1 = %@",currentRoute.outputs);
-      NSLog(@"已选择的音频输出2 = %@",audioName);
-       result(audioName);
-  }
-  
-  
-  
-  else {
+    } else {
       result([FlutterError
           errorWithCode:[NSString stringWithFormat:@"%@Failed", call.method]
                 message:[NSString stringWithFormat:@"Error: peerConnection not found!"]
@@ -1396,6 +1365,31 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
                 message:[NSString stringWithFormat:@"Error: peerConnection not found!"]
                 details:nil]);
     }
+  } else if ([@"setFilter" isEqualToString:call.method]) {
+      //控制美颜
+      NSDictionary* argsMap = call.arguments;
+       if ([argsMap.allKeys containsObject:@"isEnable"]){
+           NSString * str = argsMap[@"isEnable"];
+           
+           if ([self.videoCapturer isKindOfClass:[FlutterRTCBeautyideoCapturer class]]){
+               FlutterRTCBeautyideoCapturer * temp = (FlutterRTCBeautyideoCapturer *)self.videoCapturer;
+               temp.isBeauty = [str isEqualToString:@"1"];
+           }
+       }
+       result(nil);
+  } else if ([@"selectedAudioOutput" isEqualToString:call.method]) {
+      //已选择的音频输出
+      AVAudioSession* session = [AVAudioSession sharedInstance];
+        
+      AVAudioSessionRouteDescription *currentRoute = [session currentRoute];
+      
+      NSString * audioName = @"";
+      if (currentRoute.outputs.count > 0){
+          audioName = currentRoute.outputs.firstObject.portType;
+      }
+      NSLog(@"已选择的音频输出1 = %@",currentRoute.outputs);
+      NSLog(@"已选择的音频输出2 = %@",audioName);
+       result(audioName);
   } else {
     [self handleFrameCryptorMethodCall:call result:result];
   }
