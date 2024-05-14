@@ -39,6 +39,12 @@ typedef void (^CapturerStopHandler)(CompletionHandler _Nonnull handler);
 @property(nonatomic, strong) NSMutableDictionary<NSString*, RTCFrameCryptor*>* _Nullable frameCryptors;
 @property(nonatomic, strong) NSMutableDictionary<NSString*, RTCFrameCryptorKeyProvider*>* _Nullable keyProviders;
 
+///转格式
+@property (nonatomic, strong) MFPixelBufferHelper * _Nullable helper;
+
+///缓存音频输出设备
+@property (nonatomic, strong) NSString * _Nullable cacheAudioOutputType;
+
 #if TARGET_OS_IPHONE
 @property(nonatomic, retain) UIViewController* viewController; /*for broadcast or ReplayKit */
 #endif
