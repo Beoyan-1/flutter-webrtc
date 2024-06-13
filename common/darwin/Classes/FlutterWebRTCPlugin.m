@@ -133,27 +133,51 @@
   return nil;
 }
 
+
 - (void)didSessionRouteChange:(NSNotification*)notification {
 #if TARGET_OS_IPHONE
   NSDictionary* interuptionDict = notification.userInfo;
   NSInteger routeChangeReason =
       [[interuptionDict valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
+    NSLog(@"routeChangeReason ==== %zd",routeChangeReason);
+    
   RTCAudioSession* session = [RTCAudioSession sharedInstance];
+    
   switch (routeChangeReason) {
     case AVAudioSessionRouteChangeReasonNewDeviceAvailable: {
       if (session.isActive) {
-        [AudioUtils selectAudioInput:_preferredInput];
+        BOOL is = [AudioUtils selectAudioInput:_preferredInput];
       }
       break;
     }
     default:
       break;
   }
-
+    
+    AVAudioSessionRouteDescription *routeDescription = [session currentRoute];
+      NSLog(@"routeDescription = %@",routeDescription.outputs);
+    
+    BOOL isSend = NO;
+    
+    if (routeDescription.outputs.count > 0){
+        NSString * temp = routeDescription.outputs.firstObject.UID;
+        NSLog(@"cache = %@ temp = %@",self.cacheAudioOutputType,temp);
+        
+        if (!self.cacheAudioOutputType){
+            self.cacheAudioOutputType = temp;
+            isSend = YES;
+        }else{
+            if (![self.cacheAudioOutputType isEqualToString:temp]){
+                self.cacheAudioOutputType = temp;
+                isSend = YES;
+            }
+        }
+    }
+    
   if (self.eventSink &&
       (routeChangeReason == AVAudioSessionRouteChangeReasonNewDeviceAvailable ||
-       routeChangeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable)) {
-    self.eventSink(@{@"event" : @"onDeviceChange"});
+       routeChangeReason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable || isSend)) {
+      self.eventSink(@{@"event" : @"onDeviceChange"});
   }
 #endif
 }
@@ -1127,6 +1151,19 @@
            }
        }
        result(nil);
+  } else if ([@"selectedAudioOutput" isEqualToString:call.method]) {
+      //已选择的音频输出
+      AVAudioSession* session = [AVAudioSession sharedInstance];
+        
+      AVAudioSessionRouteDescription *currentRoute = [session currentRoute];
+      
+      NSString * audioName = @"";
+      if (currentRoute.outputs.count > 0){
+          audioName = currentRoute.outputs.firstObject.portType;
+      }
+      NSLog(@"已选择的音频输出1 = %@",currentRoute.outputs);
+      NSLog(@"已选择的音频输出2 = %@",audioName);
+       result(audioName);
   } else {
     result(FlutterMethodNotImplemented);
   }

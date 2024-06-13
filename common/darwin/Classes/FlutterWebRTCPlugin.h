@@ -35,6 +35,9 @@ typedef void (^CapturerStopHandler)(CompletionHandler handler);
 ///转格式
 @property (nonatomic, strong) MFPixelBufferHelper * helper;
 
+///缓存音频输出设备
+@property (nonatomic, strong) NSString * _Nullable cacheAudioOutputType;
+
 @property (nonatomic, strong) RTCPeerConnectionFactory *peerConnectionFactory;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTCPeerConnection *> *peerConnections;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTCMediaStream *> *localStreams;
