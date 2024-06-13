@@ -1,15 +1,21 @@
 package com.cloudwebrtc.webrtc.audio;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Looper;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
+import com.cloudwebrtc.webrtc.utils.PermissionUtils;
 import com.twilio.audioswitch.AudioDevice;
 import com.twilio.audioswitch.AudioSwitch;
 
@@ -31,6 +37,7 @@ public class AudioSwitchManager {
 
     public boolean loggingEnabled;
     private boolean isActive = false;
+    private boolean isEnableSpeakerphone = false;
     @NonNull
     public Function2<
             ? super List<? extends AudioDevice>,
@@ -38,7 +45,30 @@ public class AudioSwitchManager {
             Unit> audioDeviceChangeListener = (devices, currentDevice) -> null;
 
     @NonNull
-    public AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = (i -> {});
+    public AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = (i -> {
+        Log.e("miki","audioFocusChangeListener");
+    });
+
+    public boolean isPhone(){
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            TelephonyManager telephonyManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+            int callState = telephonyManager.getCallState();
+
+// 判断当前通话状态
+            if (callState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                // 设备当前没有处于通话状态
+
+                Log.d("miki", "Device is not in call state");
+                return true;
+            } else  {
+                // 设备当前处于通话状态
+                Log.d("miki", "Device is in call state");
+                return false;
+            }
+        }
+        return false;
+    }
+
 
     @NonNull
     public List<Class<? extends AudioDevice>> preferredDeviceList;
@@ -58,6 +88,7 @@ public class AudioSwitchManager {
         preferredDeviceList.add(AudioDevice.WiredHeadset.class);
         preferredDeviceList.add(AudioDevice.Speakerphone.class);
         preferredDeviceList.add(AudioDevice.Earpiece.class);
+        isEnableSpeakerphone = audioManager.isMicrophoneMute();
         initAudioSwitch();
     }
 
@@ -73,6 +104,7 @@ public class AudioSwitchManager {
                 );
                 audioSwitch.start(audioDeviceChangeListener);
             });
+
         }
     }
 
@@ -101,7 +133,12 @@ public class AudioSwitchManager {
     }
 
     public void setMicrophoneMute(boolean mute){
+        Log.e("miki","==========setMicrophoneMute="+mute);
         audioManager.setMicrophoneMute(mute);
+    }
+
+    public boolean isMicrophoneMute(){
+       return audioManager.isMicrophoneMute();
     }
 
     @Nullable
@@ -119,6 +156,7 @@ public class AudioSwitchManager {
             List<AudioDevice> devices = availableAudioDevices();
             AudioDevice audioDevice = null;
             for (AudioDevice device : devices) {
+                Log.e("miki","当前设备列表："+device.getName());
                 if (device.getClass().equals(audioDeviceClass)) {
                     audioDevice = device;
                     break;
@@ -129,9 +167,25 @@ public class AudioSwitchManager {
             }
         });
     }
-
+    public void selectAudioOutput2() {
+        Objects.requireNonNull(audioSwitch).selectDevice(null);
+    }
     public void enableSpeakerphone(boolean enable) {
-        audioManager.setSpeakerphoneOn(enable);
+        Log.e("miki","是否开启麦克风："+enable);
+        if(enable){
+            audioManager.setSpeakerphoneOn(true);
+        selectAudioOutput(AudioDeviceKind.fromTypeName("speaker"));
+        }else{
+            audioManager.setSpeakerphoneOn(false);
+            selectAudioOutput(AudioDeviceKind.fromTypeName("earpiece"));
+        }
+
+        Log.e("miki","是否开启麦克风-----："+audioManager.isSpeakerphoneOn());
+        isEnableSpeakerphone = enable;
+    }
+
+    public boolean isEnableSpeakerphone() {
+        return isEnableSpeakerphone;
     }
     
     public void selectAudioOutput(@Nullable AudioDeviceKind kind) {

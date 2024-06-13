@@ -4,19 +4,26 @@ import static com.cloudwebrtc.webrtc.utils.MediaConstraintsUtils.parseMediaConst
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.LongSparseArray;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.cloudwebrtc.webrtc.audio.AudioDeviceKind;
 import com.cloudwebrtc.webrtc.audio.AudioSwitchManager;
@@ -37,6 +44,7 @@ import org.webrtc.CryptoOptions;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DtmfSender;
 import org.webrtc.EglBase;
+import org.webrtc.HardwareVideoDecoderFactory;
 import org.webrtc.IceCandidate;
 import org.webrtc.Logging;
 import org.webrtc.MediaConstraints;
@@ -110,11 +118,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   private AudioDeviceModule audioDeviceModule;
 
   private Activity activity;
+  PhoneCallReceiver phoneCallReceiver = new PhoneCallReceiver();
+  private static final String PERMISSION_PHONE = Manifest.permission.READ_PHONE_STATE;
 
   MethodCallHandlerImpl(Context context, BinaryMessenger messenger, TextureRegistry textureRegistry) {
     this.context = context;
     this.textures = textureRegistry;
     this.messenger = messenger;
+
   }
 
   static private void resultError(String method, String error, Result result) {
@@ -143,6 +154,24 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     if (mFactory != null) {
       return;
     }
+    final ArrayList<String> requestPermissions = new ArrayList<>();
+    requestPermissions.add(PERMISSION_PHONE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      requestPermissions(
+              requestPermissions,
+              /* successCallback */ new Callback() {
+                @Override
+                public void invoke(Object... args) {
+                  IntentFilter intentFilter = new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+                  context.registerReceiver(phoneCallReceiver, intentFilter);
+                }
+              },
+              /* errorCallback */ new Callback() {
+                @Override
+                public void invoke(Object... args) {
+                }
+              });
+    }
 
     PeerConnectionFactory.initialize(
             InitializationOptions.builder(context)
@@ -170,6 +199,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
             .createPeerConnectionFactory();
   }
 
+  boolean speaker= true;
   @Override
   public void onMethodCall(MethodCall call, @NonNull Result notSafeResult) {
     ensureInitialized();
@@ -201,6 +231,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       case "createOffer": {
         String peerConnectionId = call.argument("peerConnectionId");
         Map<String, Object> constraints = call.argument("constraints");
+        Log.e("miki","peerConnectionId="+peerConnectionId+";constraints="+constraints.toString());
         peerConnectionCreateOffer(peerConnectionId, new ConstraintsMap(constraints), result);
         break;
       }
@@ -400,6 +431,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         SurfaceTextureEntry entry = textures.createSurfaceTexture();
         SurfaceTexture surfaceTexture = entry.surfaceTexture();
         FlutterRTCVideoRenderer render = new FlutterRTCVideoRenderer(surfaceTexture, entry);
+
         renders.put(entry.id(), render);
 
         EventChannel eventChannel =
@@ -444,6 +476,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         } else {
           stream = getStreamForId(streamId, ownerTag);
         }
+
         if (trackId != null && !trackId.equals("0")){
           render.setStream(stream, trackId);
         } else {
@@ -468,6 +501,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         getUserMediaImpl.switchCamera(trackId, result);
         break;
       }
+      case "mediaStreamTrackSwitchCameraById": {
+        String trackId = call.argument("trackId");
+        String cameraId = call.argument("cameraId");
+        getUserMediaImpl.switchCameraById(trackId,cameraId, result);
+        break;
+      }
       case "setVolume": {
         String trackId = call.argument("trackId");
         double volume = call.argument("volume");
@@ -477,8 +516,25 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       }
       case "selectAudioOutput": {
         String deviceId = call.argument("deviceId");
+        Log.e("miki","android切换设备："+deviceId);
         AudioSwitchManager.instance.selectAudioOutput(AudioDeviceKind.fromTypeName(deviceId));
         result.success(null);
+        break;
+      }
+      case "selectedAudioOutput": {
+        Log.e("miki","selectedAudioDevice()："+AudioSwitchManager.instance.selectedAudioDevice().toString());
+        if(AudioSwitchManager.instance.selectedAudioDevice().toString().toLowerCase().contains("earpiece")
+                ||AudioSwitchManager.instance.selectedAudioDevice().toString().toLowerCase().contains("speaker")){
+          Log.e("miki","==========isEnableSpeakerphone="+AudioSwitchManager.instance.isEnableSpeakerphone());
+          if(AudioSwitchManager.instance.isEnableSpeakerphone()){
+            result.success("speaker");
+          }else{
+            result.success("earpiece");
+          }
+        }else{
+          result.success(AudioSwitchManager.instance.selectedAudioDevice().toString());
+        }
+
         break;
       }
       case "setMicrophoneMute":
@@ -490,12 +546,16 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
           String deviceId = call.argument("deviceId");
           getUserMediaImpl.setPreferredInputDevice(Integer.parseInt(deviceId));
+          Log.e("miki","deviceId="+deviceId+"-----当前被选中的是="+AudioSwitchManager.instance.selectedAudioDevice().getName() );
           result.success(null);
+
         } else {
+          Log.e("miki","失败" );
           result.notImplemented();
         }
         break;
       case "enableSpeakerphone":
+
         boolean enable = call.argument("enable");
         AudioSwitchManager.instance.enableSpeakerphone(enable);
         result.success(null);
@@ -615,6 +675,15 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       case "addTransceiver": {
         String peerConnectionId = call.argument("peerConnectionId");
         Map<String, Object> transceiverInit = call.argument("transceiverInit");
+       if(transceiverInit!=null){
+        // {streamIds=[757e7ec1-e88d-4b5c-b5a5-cda9cb3c1a35],
+         // sendEncodings=[{scalabilityMode=S1T3_KEY,
+         // active=true, maxBitrate=24000000, dtx=true, scaleResolutionDownBy=1.0}],
+         // direction=sendonly}
+         Log.e("miki","transceiverInit="+transceiverInit.toString());
+       }else{
+
+       }
         if (call.hasArgument("trackId")) {
           String trackId = call.argument("trackId");
           addTransceiver(peerConnectionId, trackId, transceiverInit, result);
@@ -1175,7 +1244,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   public void getUserMedia(ConstraintsMap constraints, Result result) {
     String streamId = getNextStreamUUID();
     MediaStream mediaStream = mFactory.createLocalMediaStream(streamId);
-
     if (mediaStream == null) {
       // XXX The following does not follow the getUserMedia() algorithm
       // specified by
@@ -1303,14 +1371,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   public void mediaStreamTrackSetVolume(final String id, final double volume) {
     MediaStreamTrack track = getTrackForId(id);
     if (track instanceof AudioTrack) {
-      Log.d(TAG, "setVolume(): " + id + "," + volume);
+      Log.d("miki", "setVolume(): " + id + "," + volume);
       try {
         ((AudioTrack) track).setVolume(volume);
       } catch (Exception e) {
-        Log.e(TAG, "setVolume(): error", e);
+        Log.e("miki", "setVolume(): error", e);
       }
     } else {
-      Log.w(TAG, "setVolume(): track not found: " + id);
+      Log.w("miki", "setVolume(): track not found: " + id);
     }
   }
 
@@ -1424,8 +1492,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       Log.d(TAG, "peerConnectionAddStream() mediaStream is null");
       return;
     }
+
     PeerConnection peerConnection = getPeerConnection(id);
     if (peerConnection != null) {
+     List<AudioTrack> list =  mediaStream.audioTracks;
+     if(list!=null){
+       list.get(0).setVolume(0);
+     }
       boolean res = peerConnection.addStream(mediaStream);
       Log.d(TAG, "addStream" + result);
       result.success(res);
@@ -1946,5 +2019,28 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
             context,
             activity,
             permissions.toArray(new String[permissions.size()]), callback);
+  }
+  class PhoneCallReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED)) {
+        String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+        if (state != null) {
+          if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+            Log.e("miki","EXTRA_STATE_RINGING");
+            String incomingNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
+            for (String key : mPeerConnectionObservers.keySet()) {
+              mPeerConnectionObservers.get(key).mute(false);
+            }
+          } else if (state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
+            for (String key : mPeerConnectionObservers.keySet()) {
+              Log.e("miki","EXTRA_STATE_IDLE");
+              mPeerConnectionObservers.get(key).mute(true);
+            }
+          }
+        }
+      }
+    }
   }
 }

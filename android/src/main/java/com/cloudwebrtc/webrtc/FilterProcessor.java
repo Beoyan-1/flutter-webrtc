@@ -9,16 +9,20 @@ package com.cloudwebrtc.webrtc;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import com.cloudwebrtc.webrtc.effector.RTCVideoEffector;
 
+import org.json.JSONException;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.ThreadUtils;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoProcessor;
 import org.webrtc.VideoSink;
+
+import java.io.IOException;
 
 
 public class FilterProcessor implements VideoProcessor {
@@ -32,7 +36,15 @@ public class FilterProcessor implements VideoProcessor {
         effector = new RTCVideoEffector(applicationContext);
         final Handler handler = surfaceTextureHelper.getHandler();
         ThreadUtils.invokeAtFrontUninterruptibly(handler, () ->
-                effector.init(surfaceTextureHelper)
+                {
+                    try {
+                        effector.init(surfaceTextureHelper);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
         );
     }
 
@@ -74,9 +86,11 @@ public class FilterProcessor implements VideoProcessor {
             VideoFrame effectedVideoFrame = new VideoFrame(
                     effectedI420Buffer, videoFrame.getRotation(), videoFrame.getTimestampNs());
             sink.onFrame(effectedVideoFrame);
+            Log.e("miki","onFrame--1----------------");
             originalI420Buffer.release();
 //            videoFrame.release();
         } else {
+            Log.e("miki","onFrame--2----------------");
             sink.onFrame(videoFrame);
         }
     }

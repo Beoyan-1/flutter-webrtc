@@ -1,6 +1,8 @@
 package com.cloudwebrtc.webrtc;
 
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
+import android.util.Log;
 
 import org.webrtc.EglBase;
 import org.webrtc.EglRenderer;
@@ -9,6 +11,8 @@ import org.webrtc.RendererCommon;
 import org.webrtc.ThreadUtils;
 import org.webrtc.VideoFrame;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -28,6 +32,7 @@ public class SurfaceTextureRenderer extends EglRenderer {
   private int rotatedFrameWidth;
   private int rotatedFrameHeight;
   private int frameRotation;
+  private boolean isFrame = false;
 
   /**
    * In order to render something, you must first call init().
@@ -38,6 +43,7 @@ public class SurfaceTextureRenderer extends EglRenderer {
 
   public void init(final EglBase.Context sharedContext,
                    RendererCommon.RendererEvents rendererEvents) {
+    Log.e("miki","init===1");
     init(sharedContext, rendererEvents, EglBase.CONFIG_PLAIN, new GlRectDrawer());
   }
 
@@ -54,15 +60,29 @@ public class SurfaceTextureRenderer extends EglRenderer {
     this.rendererEvents = rendererEvents;
     synchronized (layoutLock) {
       isFirstFrameRendered = false;
+      Log.e("miki","init===");
       rotatedFrameWidth = 0;
       rotatedFrameHeight = 0;
       frameRotation = -1;
     }
+//    Timer timer = new Timer();
+//    timer.schedule(new TimerTask() {
+//
+//      @Override
+//      public void run() {
+//        Log.e("miki", "timer excute");
+//        if(isFrame = false);
+//        release();
+//      }
+//    }, 3000, 0);
+
+
     super.init(sharedContext, configAttributes, drawer);
   }
   @Override
   public void init(final EglBase.Context sharedContext, final int[] configAttributes,
                    RendererCommon.GlDrawer drawer) {
+    Log.e("miki","init===2");
     init(sharedContext, null /* rendererEvents */, configAttributes, drawer);
   }
   /**
@@ -95,6 +115,7 @@ public class SurfaceTextureRenderer extends EglRenderer {
   // VideoSink interface.
   @Override
   public void onFrame(VideoFrame frame) {
+    isFrame = true;
     updateFrameDimensionsAndReportEvents(frame);
     super.onFrame(frame);
   }
@@ -116,13 +137,16 @@ public class SurfaceTextureRenderer extends EglRenderer {
 
   // Update frame dimensions and report any changes to |rendererEvents|.
   private void updateFrameDimensionsAndReportEvents(VideoFrame frame) {
+    Log.e("miki","updateFrameDimensionsAndReportEvents,isRenderingPaused="+isRenderingPaused);
     synchronized (layoutLock) {
       if (isRenderingPaused) {
         return;
       }
+      Log.e("miki","onFirstFrameRendered=isFirstFrameRendered="+isFirstFrameRendered);
       if (!isFirstFrameRendered) {
         isFirstFrameRendered = true;
         if (rendererEvents != null) {
+
           rendererEvents.onFirstFrameRendered();
         }
       }

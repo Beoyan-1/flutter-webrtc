@@ -1,5 +1,7 @@
 package com.cloudwebrtc.webrtc;
 
+import android.content.Context;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import androidx.annotation.Nullable;
 
@@ -263,8 +265,10 @@ class PeerConnectionObserver implements PeerConnection.Observer, EventChannel.St
           }
       }
       if (sender != null) {
+          //peerConnection.getStats(rtcStatsReport -> handleStatsReport(rtcStatsReport, result), sender);
           peerConnection.getStats(sender, rtcStatsReport -> handleStatsReport(rtcStatsReport, result));
       } else if (receiver != null) {
+         // peerConnection.getStats(rtcStatsReport -> handleStatsReport(rtcStatsReport, result), receiver);
           peerConnection.getStats(receiver, rtcStatsReport -> handleStatsReport(rtcStatsReport, result));
       } else {
           resultError("peerConnectionGetStats", "MediaStreamTrack not found for id: " + trackId, result);
@@ -377,7 +381,6 @@ class PeerConnectionObserver implements PeerConnection.Observer, EventChannel.St
       String trackId = track.id();
 
       remoteTracks.put(trackId, track);
-
       ConstraintsMap trackInfo = new ConstraintsMap();
       trackInfo.putString("id", trackId);
       trackInfo.putString("label", "Video");
@@ -401,6 +404,9 @@ class PeerConnectionObserver implements PeerConnection.Observer, EventChannel.St
       trackInfo.putString("readyState", track.state().toString());
       trackInfo.putBoolean("remote", true);
       audioTracks.pushMap(trackInfo);
+      Log.e("miki","是否是通话状态："+AudioSwitchManager.instance.isPhone());
+      if(AudioSwitchManager.instance.isPhone())
+        mute(false);
     }
     params.putArray("audioTracks", audioTracks.toArrayList());
     params.putArray("videoTracks", videoTracks.toArrayList());
@@ -722,15 +728,19 @@ class PeerConnectionObserver implements PeerConnection.Observer, EventChannel.St
       if(direction == null) {
           direction = "sendrecv";
       }
-
-      if(encodingsParams != null) {
-          for (int i=0;i< encodingsParams.size();i++){
+      if (encodingsParams != null) {
+          for (int i = 0; i < encodingsParams.size(); i++) {
               Map<String, Object> params = encodingsParams.get(i);
-              sendEncodings.add(0, mapToEncoding(params));
+              sendEncodings.add(mapToEncoding(params));
           }
-          init = new RtpTransceiver.RtpTransceiverInit(stringToTransceiverDirection(direction) ,streamIds, sendEncodings);
+          for(int i=0;i<sendEncodings.size();i++){
+              Log.e("miki","sendEncodings  scalabilityMode+="+";rid="+sendEncodings.get(i).rid+";active="+sendEncodings.get(i).active);
+          }
+          init = new RtpTransceiver.RtpTransceiverInit(stringToTransceiverDirection(direction), streamIds, sendEncodings);
+          Log.e("miki","----------1");
       } else {
-          init = new RtpTransceiver.RtpTransceiverInit(stringToTransceiverDirection(direction) ,streamIds);
+          init = new RtpTransceiver.RtpTransceiverInit(stringToTransceiverDirection(direction), streamIds);
+          Log.e("miki","----------2");
       }
       return  init;
   }
@@ -966,8 +976,10 @@ private RtpParameters updateRtpParameters(RtpParameters parameters, Map<String, 
   public void addTransceiver(MediaStreamTrack track, Map<String, Object> transceiverInit,  Result result) {
       RtpTransceiver  transceiver;
       if(transceiverInit != null){
+          Log.e("miki","1----track="+track.id()+";"+mapToRtpTransceiverInit(transceiverInit).toString());
           transceiver = peerConnection.addTransceiver(track, mapToRtpTransceiverInit(transceiverInit));
       } else {
+          Log.e("miki","2----track="+track.id());
           transceiver = peerConnection.addTransceiver(track);
       }
       String transceiverId = transceiver.getMid();
@@ -1164,6 +1176,19 @@ private RtpParameters updateRtpParameters(RtpParameters parameters, Map<String, 
       } while (dataChannels.get(uuid) != null);
   
       return uuid;
+    }
+
+    public void mute(boolean isMute){
+        for (String key : remoteTracks.keySet()) {
+            try{
+                if(remoteTracks.get(key)!=null &&remoteTracks.get(key).kind()!=null && remoteTracks.get(key).kind().equals("audio")){
+                    Log.e("miki","remoteTracks.get(key).enabled()="+remoteTracks.get(key).enabled());
+                    remoteTracks.get(key).setEnabled(isMute);
+                }
+            }catch (IllegalStateException e){
+                Log.e("miki","出错：IllegalStateException"+e.getMessage());
+            }
+        }
     }
   
 }

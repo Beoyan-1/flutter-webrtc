@@ -101,6 +101,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
     public FlutterRTCVideoRenderer(SurfaceTexture texture, TextureRegistry.SurfaceTextureEntry entry) {
         this.surfaceTextureRenderer = new SurfaceTextureRenderer("");
         listenRendererEvents();
+        Log.e("miki","init------1");
         surfaceTextureRenderer.init(EglUtils.getRootEglBaseContext(), rendererEvents);
         surfaceTextureRenderer.surfaceCreated(texture);
 
@@ -204,13 +205,13 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
             if (videoTrack != null) {
                 try {
-                    Log.w(TAG, "FlutterRTCVideoRenderer.setVideoTrack, set video track to " + videoTrack.id());
+                    Log.w(TAG, "miki FlutterRTCVideoRenderer.setVideoTrack, set video track to " + videoTrack.id());
                     tryAddRendererToVideoTrack();
                 } catch (Exception e) {
-                    Log.e(TAG, "tryAddRendererToVideoTrack " + e.toString());
+                    Log.e(TAG, "miki tryAddRendererToVideoTrack " + e.toString());
                 }
             } else {
-                Log.w(TAG, "FlutterRTCVideoRenderer.setVideoTrack, set video track to null");
+                Log.w(TAG, "miki  FlutterRTCVideoRenderer.setVideoTrack, set video track to null");
             }
         }
     }
@@ -221,6 +222,7 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
      */
     private void tryAddRendererToVideoTrack() throws Exception {
         if (videoTrack != null) {
+
             EglBase.Context sharedContext = EglUtils.getRootEglBaseContext();
 
             if (sharedContext == null) {
@@ -232,8 +234,10 @@ public class FlutterRTCVideoRenderer implements EventChannel.StreamHandler {
 
             surfaceTextureRenderer.release();
             listenRendererEvents();
+            Log.e("miki","init------2");
             surfaceTextureRenderer.init(sharedContext, rendererEvents);
             surfaceTextureRenderer.surfaceCreated(texture);
+
 
             videoTrack.addSink(surfaceTextureRenderer);
         }
