@@ -160,4 +160,12 @@ class Helper {
     }
     return Future.value();
   }
+
+  static Future<String> selectedAudioOutput() async {
+    print('miki  WebRTC.invokeMethod(selectedAudioOutput)');
+    String device = await WebRTC.invokeMethod(
+      'selectedAudioOutput',
+    );
+    return device;
+  }
 }
